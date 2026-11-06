@@ -1,5 +1,7 @@
 <?php
 $name = (string) $profile['full_name'];
+$stylesVersion = (string) (filemtime(FCPATH . 'assets/styles.css') ?: 1);
+$scriptVersion = (string) (filemtime(FCPATH . 'assets/app.js') ?: 1);
 $words = preg_split('/\s+/', trim((string) $profile['headline'])) ?: [];
 $firstLine = implode(' ', array_slice($words, 0, 2));
 $accent = implode(' ', array_slice($words, 2, 2));
@@ -26,7 +28,7 @@ $isSafeExternalUrl = static function (string $value): bool {
   <meta name="theme-color" content="#0a0b0f">
   <meta name="description" content="<?= esc($name) ?> — <?= esc($profile['role']) ?>">
   <title><?= esc($name) ?> — Portofolio Pribadi</title>
-  <link rel="stylesheet" href="<?= base_url('assets/styles.css') ?>">
+  <link rel="stylesheet" href="<?= base_url('assets/styles.css?v=' . $stylesVersion) ?>">
 </head>
 <body>
   <div class="scroll-progress" id="scrollProgress"></div>
@@ -115,6 +117,6 @@ $isSafeExternalUrl = static function (string $value): bool {
 
   <div class="modal-backdrop" id="projectModal" aria-hidden="true"><div class="project-dialog" role="dialog" aria-modal="true" aria-labelledby="projectModalTitle"><button class="modal-close" data-action="close-project-modal" aria-label="Tutup">×</button><div class="detail-label" id="projectModalLabel"></div><h2 id="projectModalTitle"></h2><p class="detail-description" id="projectModalDescription"></p><div class="detail-stack" id="projectModalStack"></div><div class="detail-links" id="projectModalLinks"></div></div></div>
   <button class="back-to-top" id="backToTop" type="button" aria-label="Kembali ke atas" title="Kembali ke atas"><span aria-hidden="true">&#8593;</span></button>
-  <script src="<?= base_url('assets/app.js') ?>" defer></script>
+  <script src="<?= base_url('assets/app.js?v=' . $scriptVersion) ?>" defer></script>
 </body>
 </html>

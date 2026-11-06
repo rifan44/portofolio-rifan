@@ -1,4 +1,4 @@
-<?php $brandName = trim((string) ($profile['full_name'] ?? '')) ?: 'Portfolio'; ?>
+<?php $brandName = trim((string) ($profile['full_name'] ?? '')) ?: 'Portfolio'; $stylesVersion = (string) (filemtime(FCPATH . 'assets/styles.css') ?: 1); ?>
 <!doctype html>
 <html lang="id">
 <head>
@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#0a0b0f">
   <meta name="robots" content="noindex, nofollow">
   <title>Masuk admin — <?= esc($brandName) ?></title>
-  <link rel="stylesheet" href="<?= base_url('assets/styles.css') ?>">
+  <link rel="stylesheet" href="<?= base_url('assets/styles.css?v=' . $stylesVersion) ?>">
 </head>
 <body class="admin-body">
   <main class="admin-login-wrap">

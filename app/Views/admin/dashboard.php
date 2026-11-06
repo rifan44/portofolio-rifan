@@ -1,5 +1,6 @@
 <?php
 $brandName = trim((string) ($profile['full_name'] ?? '')) ?: 'Portfolio';
+$stylesVersion = (string) (filemtime(FCPATH . 'assets/styles.css') ?: 1);
 $field = static function (string $name, string $label, mixed $value = '', string $type = 'text', bool $required = true): string {
     $nameEscaped = esc($name, 'attr');
     $labelEscaped = esc($label);
@@ -20,7 +21,7 @@ $typeLabels = ['education' => 'Pendidikan', 'organization' => 'Organisasi', 'wor
   <meta name="theme-color" content="#0a0b0f">
   <meta name="robots" content="noindex, nofollow">
   <title>Kelola portofolio — <?= esc($brandName) ?></title>
-  <link rel="stylesheet" href="<?= base_url('assets/styles.css') ?>">
+  <link rel="stylesheet" href="<?= base_url('assets/styles.css?v=' . $stylesVersion) ?>">
 </head>
 <body class="admin-body">
   <header class="admin-topbar"><a class="brand" href="<?= site_url('/') ?>"><span class="brand-mark<?= ! empty($profile['logo_photo']) ? ' brand-mark-image' : '' ?>"><?php if (! empty($profile['logo_photo'])): ?><img class="brand-image" src="<?= esc(site_url('media/' . $profile['logo_photo']), 'attr') ?>" alt=""><?php else: ?>R.<?php endif; ?></span><span class="brand-name"><?= esc($brandName) ?></span></a><div class="admin-top-actions"><a class="button button-small button-ghost" href="<?= site_url('/') ?>">Lihat situs ↗</a><form action="<?= site_url('admin/logout') ?>" method="post"><?= csrf_field() ?><button class="button button-small button-outline" type="submit">Keluar</button></form></div></header>
