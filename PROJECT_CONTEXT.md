@@ -44,7 +44,7 @@ Game/                        # Paket aset game, tidak diperlukan aplikasi portfo
 - Seeder: `app/Database/Seeds/PortfolioSeeder.php`; hanya mengisi konten demo jika tabel `profiles` kosong.
 - CMS di `/admin/login` menyediakan edit profil, proyek, daftar skill, riwayat (pendidikan/organisasi/kerja/pencapaian/proyek), dan tautan sosial.
 - Admin memakai `ADMIN_EMAIL` dan hash `ADMIN_PASSWORD_HASH` dari `.env`, session auth, pembatas login per-session, validasi input, CSRF, serta escape output.
-- `.env.example` berisi kerangka konfigurasi tanpa credential. `.env` belum dibuat.
+- `.env.example` berisi kerangka konfigurasi tanpa credential. `.env` lokal ada di clone kerja, diabaikan Git, dan berisi konfigurasi admin sementara khusus pengujian lokal; password/hash tidak dicatat di dokumen.
 - Data awal masih mengandung email dan social URL contoh. Perbarui melalui CMS sebelum publikasi.
 - URL proyek eksternal dapat diatur dari CMS setelah game/POS live; sinkronisasi antar salinan domain tidak tersedia.
 
@@ -54,7 +54,6 @@ Game/                        # Paket aset game, tidak diperlukan aplikasi portfo
 - Jalankan `composer install`, buat database baru, lalu `php spark migrate` dan `php spark db:seed PortfolioSeeder`.
 - Database lokal baru `rifrain_portfolio` telah dibuat di MySQL lokal; tidak ada database hosting/production yang diubah.
 - Migration dan seeder berhasil. Data lokal sekarang: 1 profil, 3 proyek, 12 relasi teknologi, 8 skill, 2 riwayat, 2 tautan sosial.
-- `.env` lokal berada hanya di clone kerja dan diabaikan Git; admin tetap belum aktif sampai `ADMIN_EMAIL` dan hash password dikonfigurasi.
 
 ## Pengujian dan verifikasi
 
@@ -62,20 +61,21 @@ Game/                        # Paket aset game, tidak diperlukan aplikasi portfo
 - `php spark migrate` dan `php spark db:seed PortfolioSeeder`: berhasil di database lokal baru.
 - Server lokal: homepage dan `/admin/login` merespons HTTP 200; isi profil, proyek, skill, dan konfigurasi login tampil.
 - Composer mengunci `codeigniter4/framework v4.7.6`. Composer 2.4.1 mengeluarkan deprecation notice di PHP 8.4.
-- Visual browser QA tidak selesai: Computer Use helper gagal tiga kali dengan `native pipe unavailable`; HTTP smoke check tetap berhasil.
-- Belum ada uji CRUD setelah login atau uji deploy/hosting.
+- Login admin sementara berhasil melalui form CSRF; respons mengarahkan ke dashboard dan sesi dapat membuka `/admin` (HTTP 200). Editor profil, proyek, dan skill tampil.
+- Visual QA dengan Chrome headless: desktop 1440×1000 dan mobile 390×844. Pemeriksaan mobile menemukan headline/ringkasan melampaui layar dan navigasi ponsel tidak terlihat; aturan responsif diperbaiki, tautan navigasi dibuat tetap tampak, lalu screenshot mobile diambil ulang.
+- Belum menguji operasi simpan/hapus CMS atau deploy/hosting. Akun sementara hanya ada di `.env` clone lokal; buat kredensial baru dan jangan salin akun ini ke hosting.
 - Source asli di folder `rifrain.tech` berada di bawah root Git user Windows, jadi publikasi dilakukan dari clone bersih repository ini.
 
 ## Risiko dan next steps
 
-1. Isi kredensial admin lokal menggunakan hash password, lalu uji login dan CRUD CMS.
-2. Lakukan visual browser QA di beberapa ukuran layar.
-3. Verifikasi hosting mendukung PHP 8.2+, ekstensi yang diperlukan, MySQLi, dan document root ke `public/`.
-4. Ganti konten contoh dan URL placeholder sebelum publikasi.
+1. Verifikasi hosting mendukung PHP 8.2+, ekstensi yang diperlukan, MySQLi, dan document root ke `public/`.
+2. Ganti konten contoh dan URL placeholder melalui CMS sebelum publikasi.
+3. Uji operasi simpan/hapus CMS dengan data uji lokal bila diperlukan.
+4. Siapkan kredensial admin baru khusus untuk setiap deployment; jangan gunakan kredensial lokal sementara.
 5. Periksa lisensi paket di `Game/` sebelum aset didistribusikan.
 
 ## Catatan workspace
 
 - `legacy-static/` sengaja mempertahankan source halaman statis lama sebagai arsip.
 - `.ci4-scaffold/` di folder source asli adalah scaffold sementara hasil Composer yang tidak dipakai runtime dan sudah masuk `.gitignore`. Percobaan pembersihannya ditolak execution policy; folder tidak disalin ke repository ini.
-- Tidak ada file `.env`, secret, deployment, atau migrasi database yang dibuat/dijalankan.
+- `.env` ada hanya di clone publish lokal dan masuk ignore Git; credential/hash tidak ditulis di source, dokumentasi, atau commit. Tidak ada deployment/hosting yang disentuh.
