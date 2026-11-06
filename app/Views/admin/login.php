@@ -5,7 +5,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0a0b0f">
-  <title>Admin Login — Rifrain Portfolio</title>
+  <meta name="robots" content="noindex, nofollow">
+  <title>Masuk admin — <?= esc($brandName) ?></title>
   <link rel="stylesheet" href="<?= base_url('assets/styles.css') ?>">
 </head>
 <body class="admin-body">

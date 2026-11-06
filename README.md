@@ -1,15 +1,15 @@
-# Rifan Portfolio
+# Rifan Maulana — Portfolio
 
-Portofolio pribadi Rifan dengan CodeIgniter 4, PHP, dan MySQL. Halaman publik membaca profil, proyek, daftar teknologi, riwayat pendidikan/pengalaman/pencapaian, serta tautan kontak dari database.
+Portofolio pribadi Rifan Maulana dengan CodeIgniter 4, PHP, dan MySQL. Halaman publik membaca profil, proyek, daftar teknologi, riwayat pendidikan/pengalaman/pencapaian, keahlian, dan tautan kontak dari database.
 
 ## Stack dan kebutuhan server
 
-- PHP 8.2+ dengan ekstensi `intl`, `mbstring`, `mysqli`/`mysqlnd`.
+- PHP 8.2+ dengan ekstensi `intl`, `mbstring`, `mysqli`/`mysqlnd`; PHP 8.4 direkomendasikan jika tersedia.
 - MySQL/MariaDB.
 - CodeIgniter 4.7 (`codeigniter4/framework` dikelola lewat Composer).
 - Document root web server harus menunjuk ke folder `public/`.
 
-[Persyaratan resmi CodeIgniter](https://codeigniter.com/user_guide/intro/requirements.html) menyebut CI4 4.7.x memerlukan PHP 8.2 atau lebih baru. [Panduan appstarter](https://github.com/codeigniter4/appstarter) menyarankan web root diarahkan ke `public/`. Pastikan versi PHP ini tersedia di hosting sebelum memilih paket dan subdomain.
+[Persyaratan resmi CodeIgniter](https://codeigniter.com/user_guide/intro/requirements.html) menyebut CI4 4.7.x memerlukan PHP 8.2 atau lebih baru. [Panduan deployment CI4](https://codeigniter.com/user_guide/installation/deployment.html) menjelaskan layout shared hosting dan menyarankan web root diarahkan ke `public/`. Pastikan versi PHP dan ekstensi tersedia di hosting sebelum mengunggah aplikasi.
 
 ## Menjalankan lokal
 
@@ -66,26 +66,69 @@ Migrasi skema ada di `app/Database/Migrations`; data awal ada di `app/Database/S
 
 ## Deploy ke hosting bersama
 
-1. Pastikan cPanel mendukung PHP 8.2+, ekstensi yang diperlukan, MySQL/MariaDB, dan pengaturan document root subdomain.
-2. Buat database dan user MySQL di cPanel, lalu berikan izin ke database.
-3. Upload source CI4 dan dependensi. Jika Composer tersedia di hosting, jalankan `composer install --no-dev --optimize-autoloader`; kalau tidak, jalankan di mesin lokal dan upload juga folder `vendor/`.
-4. Atur document root domain ke folder `public/` project agar `app/`, `writable/`, dan konfigurasi tidak menjadi direktori web publik.
-5. Buat `.env` di root aplikasi dengan `CI_ENVIRONMENT = production`, `database.default.DBDebug = false`, base URL HTTPS domain yang benar, koneksi database hosting, `ADMIN_EMAIL`, dan `ADMIN_PASSWORD_HASH`.
-6. Pastikan `writable/` bisa ditulis oleh PHP. Jalankan migrasi dan seeder satu kali setelah memeriksa nama database yang dituju:
+### Persiapan
 
-   ```bash
-   php spark migrate
-   php spark db:seed PortfolioSeeder
-   ```
+1. Pastikan paket hosting menyediakan PHP 8.2 atau lebih baru (PHP 8.4 direkomendasikan), ekstensi `intl`, `mbstring`, dan `mysqli`, MySQL/MariaDB, SSL untuk domain, serta akses untuk mengatur document root atau menjalankan panduan layout alternatif CI4.
+2. Buat database dan user MySQL melalui panel hosting, lalu berikan hak akses ke database tersebut. Gunakan nama database, username, dan password persis seperti yang diberikan panel.
+3. Siapkan kredensial admin khusus untuk hosting. Buat hash password secara lokal memakai langkah di bagian Login dan CMS admin.
 
-Jangan unggah file `.env` ke repository. Untuk domain kelas, buat salinan project dengan konfigurasi `.env` dan database miliknya sendiri; perubahan konten di satu salinan tidak otomatis tersinkron dengan domain lain.
+### Upload dan document root
+
+Layout yang disarankan adalah menyimpan seluruh project di folder non-publik, lalu mengarahkan document root domain ke `public/` di dalam project. Dengan begitu, `app/`, `vendor/`, `writable/`, dan `.env` berada di luar web root.
+
+Jika Composer tersedia di hosting, jalankan dari root project:
+
+```bash
+composer install --no-dev --optimize-autoloader
+```
+
+Jika Composer tidak tersedia, siapkan salinan release terpisah dari project, jalankan perintah yang sama di mesin lokal, lalu upload `vendor/` hasil instalasi itu. Jangan menimpa `vendor/` pada folder kerja yang digunakan untuk pengembangan dan test.
+
+> Jangan jadikan root project sebagai document root. Jika panel tidak mengizinkan document root menunjuk ke `public/`, ikuti layout dua direktori di [panduan deployment CI4](https://codeigniter.com/user_guide/installation/deployment.html) dan sesuaikan path di front controller. Simpan `.env` di luar semua folder yang dapat diakses publik.
+
+### Konfigurasi produksi
+
+Buat file `.env` baru di root project pada server; jangan upload `.env` dari komputer lokal. Atur minimal nilai berikut memakai data domain dan database dari panel hosting:
+
+```ini
+CI_ENVIRONMENT = production
+app.baseURL = 'https://rifrain.my.id/'
+app.forceGlobalSecureRequests = true
+
+database.default.hostname = localhost
+database.default.database = NAMA_DATABASE_DARI_PANEL
+database.default.username = USER_DATABASE_DARI_PANEL
+database.default.password = PASSWORD_DATABASE_DARI_PANEL
+database.default.DBDriver = MySQLi
+database.default.port = 3306
+database.default.DBDebug = false
+
+ADMIN_EMAIL = EMAIL_ADMIN
+ADMIN_PASSWORD_HASH = HASH_PASSWORD_ADMIN
+```
+
+Aktifkan SSL sebelum memakai base URL HTTPS dan `app.forceGlobalSecureRequests`. Cookie session dikirim dengan flag `Secure` ketika environment `production`; aplikasi admin memerlukan HTTPS agar browser mengirim cookie tersebut. Jangan menggunakan password polos pada `ADMIN_PASSWORD_HASH`.
+
+Pastikan PHP dapat menulis ke `writable/cache/`, `writable/logs/`, dan `writable/session/`. Gunakan permission minimum yang didukung hosting, biasanya 755 atau 775; jangan memberi permission 777.
+
+### Database dan pemeriksaan setelah upload
+
+Jalankan migration dan seeder hanya untuk database baru yang masih kosong. Periksa kembali database tujuan sebelum menjalankan perintah; jangan menjalankan seeder pada database berisi data tanpa meninjau isinya.
+
+```bash
+php spark migrate
+php spark db:seed PortfolioSeeder
+```
+
+Setelah itu, buka homepage dan `/admin/login` melalui HTTPS, periksa koneksi database, lalu login dan tinjau konten. Data seed masih berisi email dan tautan sosial contoh; ganti melalui CMS sebelum situs diumumkan. Untuk domain kelas, gunakan file `.env` dan database tersendiri. Perubahan konten di satu salinan tidak otomatis tersinkron ke domain lain.
 
 ## Domain proyek lain
 
 URL proyek dapat ditambahkan atau diperbarui dari CMS. Setelah proyek game di `rifrain.tech` atau POS di `skincare.rifrain.my.id` tersedia publik, masukkan URL live dan repository pada formulir proyek agar tampil di modal detail portofolio.
 
-## Catatan repository
+## Keamanan dan data
 
-- `legacy-static/` menyimpan salinan HTML/CSS/JavaScript statis versi awal sebagai arsip migrasi. Aplikasi aktif menggunakan `app/` dan `public/`.
-- `Game/` berisi koleksi aset pixel-art/game dan tidak diperlukan untuk menjalankan halaman portofolio ini. Periksa lisensi masing-masing paket sebelum distribusi.
-- Sebelum menjalankan migration/seeder di server lain, pastikan `.env` menunjuk ke database project yang benar. Jangan arahkan perintah ini ke database production yang sudah berisi data tanpa meninjau dampaknya.
+- Form admin dilindungi CSRF berbasis session, validasi input, dan escape output. CI4 menyarankan CSRF berbasis session ketika aplikasi memakai session; lihat [panduan keamanan CI4](https://codeigniter.com/user_guide/libraries/security.html).
+- Login admin memakai pembatas percobaan gagal per IP dengan token bucket 5 percobaan yang pulih bertahap selama 10 menit. Jika hosting berada di belakang reverse proxy, atur alamat proxy tepercaya di `app/Config/App.php` agar alamat client yang dibaca aplikasi akurat.
+- `AGENTS.md`, `PROJECT_CONTEXT.md`, dan `.env` adalah file lokal yang tidak boleh masuk repository atau diunggah ke hosting.
+- Sebelum menjalankan migration atau seeder di server, pastikan `.env` menunjuk ke database project yang benar. Jangan jalankan seeder ke database production yang sudah berisi data tanpa meninjau dampaknya.

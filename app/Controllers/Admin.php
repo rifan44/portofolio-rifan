@@ -26,24 +26,26 @@ class Admin extends BaseController
         if ($this->request->getMethod() === 'POST') {
             $email = strtolower(trim((string) $this->request->getPost('email')));
             $password = (string) $this->request->getPost('password');
-            $lockedUntil = (int) ($session->get('admin_login_locked_until') ?? 0);
+            $throttler = service('throttler');
+            $throttleKey = 'admin-login-' . hash('sha256', $this->request->getIPAddress());
 
             if (! $configured) {
                 $error = 'Login admin belum dikonfigurasi. Atur ADMIN_EMAIL dan ADMIN_PASSWORD_HASH di .env.';
-            } elseif ($lockedUntil > time()) {
-                $error = 'Terlalu banyak percobaan. Coba lagi beberapa menit kemudian.';
-            } elseif (hash_equals(strtolower($config->email), $email) && password_verify($password, $config->passwordHash)) {
-                $session->regenerate(true);
-                $session->set(['is_admin' => true, 'admin_login_failures' => 0, 'admin_login_locked_until' => 0]);
-
-                return redirect()->to(site_url('admin'));
             } else {
-                $failures = (int) ($session->get('admin_login_failures') ?? 0) + 1;
-                $session->set('admin_login_failures', $failures);
-                if ($failures >= 5) {
-                    $session->set(['admin_login_failures' => 0, 'admin_login_locked_until' => time() + 600]);
+                $emailMatches = hash_equals(strtolower($config->email), $email);
+                $passwordMatches = password_verify($password, $config->passwordHash);
+
+                if ($emailMatches && $passwordMatches) {
+                    $throttler->remove($throttleKey);
+                    $session->regenerate(true);
+                    $session->set(['is_admin' => true]);
+
+                    return redirect()->to(site_url('admin'));
                 }
-                $error = 'Email atau password tidak sesuai.';
+
+                $error = $throttler->check($throttleKey, 5, 600)
+                    ? 'Email atau password tidak sesuai.'
+                    : 'Terlalu banyak percobaan. Tunggu sebelum mencoba kembali.';
             }
         }
 
