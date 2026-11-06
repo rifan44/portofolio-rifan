@@ -180,7 +180,10 @@ class App extends BaseConfig
      *
      * @var array<string, string>
      */
-    public array $proxyIPs = [];
+    public array $proxyIPs = [
+        '127.0.0.1' => 'CF-Connecting-IP',
+        '::1'       => 'CF-Connecting-IP',
+    ];
 
     /**
      * --------------------------------------------------------------------------

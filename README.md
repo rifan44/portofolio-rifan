@@ -144,6 +144,8 @@ server {
         try_files $uri =404;
         include fastcgi_params;
         fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        fastcgi_param HTTP_X_FORWARDED_PROTO $http_x_forwarded_proto;
+        fastcgi_param HTTP_CF_CONNECTING_IP $http_cf_connecting_ip;
         fastcgi_pass unix:/var/run/php/php8.5-fpm.sock;
     }
 
@@ -157,7 +159,7 @@ Sesuaikan socket PHP-FPM dengan versi PHP pada server. Setelah mengubah konfigur
 
 Buat database MariaDB dan user khusus aplikasi dengan hak hanya pada database portofolio. Biarkan MariaDB hanya mendengarkan di localhost; jangan membuka port database ke internet. Buat `.env` baru di root aplikasi server, jalankan migration dan seeder pada database kosong, kemudian tinjau data dari `/admin`.
 
-Jika HTTPS berhenti di Cloudflare atau reverse proxy, pastikan sambungan dari proxy ke origin juga memakai TLS sebelum mengaktifkan secure redirect. Jika CI4 berada di belakang proxy, konfigurasi proxy tepercaya dengan benar agar aplikasi mengenali skema HTTPS asli. Cookie admin production memakai flag `Secure`, jadi login membutuhkan HTTPS di browser.
+Jika memakai Cloudflare Tunnel, traffic publik menggunakan HTTPS dan tunnel meneruskan `X-Forwarded-Proto` serta `CF-Connecting-IP`. Contoh Nginx di atas meneruskan header tersebut ke PHP-FPM; CI4 hanya mempercayai proxy loopback. Cloudflare Tunnel mengenkripsi sambungan antara server dan jaringan Cloudflare. [Dokumentasi header Cloudflare](https://developers.cloudflare.com/fundamentals/reference/http-headers/) dan [Cloudflare Tunnel](https://developers.cloudflare.com/tunnel/) menjelaskan header dan jalur koneksi ini. Cookie admin production memakai flag `Secure`, jadi login membutuhkan HTTPS di browser.
 
 ## Domain proyek lain
 
