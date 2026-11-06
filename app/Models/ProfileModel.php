@@ -8,6 +8,6 @@ class ProfileModel extends Model
 {
     protected $table = 'profiles';
     protected $primaryKey = 'id';
-    protected $allowedFields = ['full_name', 'role', 'headline', 'summary', 'about', 'location', 'focus', 'availability', 'email', 'updated_at'];
+    protected $allowedFields = ['full_name', 'role', 'headline', 'summary', 'about', 'location', 'focus', 'availability', 'email', 'profile_photo', 'logo_photo', 'updated_at'];
     protected $useTimestamps = false;
 }

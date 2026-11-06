@@ -16,7 +16,7 @@ class Home extends BaseController
             'profile' => (new ProfileModel())->first(),
             'projects' => (new ProjectModel())->withTechnologies(),
             'skills' => (new SkillModel())->orderBy('sort_order', 'ASC')->findAll(),
-            'experiences' => (new ExperienceModel())->orderBy('sort_order', 'ASC')->findAll(),
+            'experiences' => (new ExperienceModel())->orderBy('sort_order', 'ASC')->orderBy('id', 'ASC')->findAll(),
             'socialLinks' => (new SocialLinkModel())->orderBy('sort_order', 'ASC')->findAll(),
         ]);
     }

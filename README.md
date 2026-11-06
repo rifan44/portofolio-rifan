@@ -43,6 +43,8 @@ CMS tersedia di `/admin/login`. Login memakai email dan hash password dari envir
 
 Di CMS, bagian profil dapat mengubah nama lengkap, peran, headline, ringkasan, tentang, lokasi, fokus, status ketersediaan, dan email. Proyek, teknologi, keahlian, riwayat, dan tautan sosial juga dikelola dari sana. Branding nama di situs publik dan halaman admin mengikuti kolom nama lengkap pada profil. Label navigasi, judul bagian, tombol, dan teks penjelas antarmuka masih ditentukan di view dan belum dapat diedit dari CMS.
 
+CMS juga mendukung foto profil, logo pada header/footer, dan gambar pratinjau pada kartu proyek. File JPG, PNG, dan WebP maksimal 2 MB per gambar; file disimpan di `writable/uploads/portfolio`, di luar folder publik. Saat memindahkan atau mencadangkan situs, sertakan folder upload tersebut. Urutan proyek dan riwayat pendidikan/pengalaman/pencapaian dapat diatur dengan tombol naik/turun di panel admin.
+
 Untuk memastikan login terkonfigurasi, cek bahwa `ADMIN_EMAIL` dan `ADMIN_PASSWORD_HASH` terisi di `.env` pada root project yang sedang dijalankan. Jika halaman login menyatakan admin belum dikonfigurasi, biasanya file `.env` berada di salinan folder yang berbeda atau server belum dijalankan ulang.
 
 Buat hash password secara lokal, lalu masukkan outputnya ke `ADMIN_PASSWORD_HASH` dalam `.env`:

@@ -9,6 +9,7 @@ use App\Models\ProjectTechnologyModel;
 use App\Models\SkillModel;
 use App\Models\SocialLinkModel;
 use CodeIgniter\HTTP\RedirectResponse;
+use CodeIgniter\Model;
 
 class Admin extends BaseController
 {
@@ -69,7 +70,7 @@ class Admin extends BaseController
             'profile' => (new ProfileModel())->first(),
             'projects' => (new ProjectModel())->withTechnologies(),
             'skills' => (new SkillModel())->orderBy('sort_order', 'ASC')->findAll(),
-            'experiences' => (new ExperienceModel())->orderBy('sort_order', 'ASC')->findAll(),
+            'experiences' => (new ExperienceModel())->orderBy('sort_order', 'ASC')->orderBy('id', 'ASC')->findAll(),
             'socialLinks' => (new SocialLinkModel())->orderBy('sort_order', 'ASC')->findAll(),
             'errors' => session()->getFlashdata('errors') ?? [],
             'message' => session()->getFlashdata('message'),
@@ -96,7 +97,52 @@ class Admin extends BaseController
             return $this->invalidForm('/admin#profile');
         }
 
-        (new ProfileModel())->update(1, array_map(static fn ($value): string => trim((string) $value), $data));
+        $model = new ProfileModel();
+        $profile = $model->find(1);
+        if (! $profile) {
+            return $this->withErrors('/admin#profile', ['profile' => 'Data profil belum tersedia.']);
+        }
+
+        $newImages = [];
+        foreach (['profile_photo' => 'profile', 'logo_photo' => 'logo'] as $field => $prefix) {
+            $upload = $this->storeImageUpload($field, $prefix);
+            if ($upload['error'] !== null) {
+                foreach ($newImages as $filename) {
+                    $this->removeStoredImage($filename);
+                }
+                return $this->withErrors('/admin#profile', [$field => $upload['error']]);
+            }
+            if ($upload['filename'] !== null) {
+                $newImages[$field] = $upload['filename'];
+            }
+        }
+
+        $values = array_map(static fn ($value): string => trim((string) $value), $data);
+        foreach (['profile_photo', 'logo_photo'] as $field) {
+            if ($this->request->getPost('remove_' . $field) === '1') {
+                $values[$field] = null;
+            }
+            if (isset($newImages[$field])) {
+                $values[$field] = $newImages[$field];
+            }
+        }
+
+        $db = db_connect();
+        $db->transBegin();
+        $model->update(1, $values);
+        $db->transComplete();
+        if (! $db->transStatus()) {
+            foreach ($newImages as $filename) {
+                $this->removeStoredImage($filename);
+            }
+            return $this->withErrors('/admin#profile', ['database' => 'Profil tidak berhasil disimpan. Periksa koneksi database.']);
+        }
+
+        foreach (['profile_photo', 'logo_photo'] as $field) {
+            if (($profile[$field] ?? null) !== ($values[$field] ?? null)) {
+                $this->removeStoredImage($profile[$field] ?? null);
+            }
+        }
         return $this->success('/admin#profile', 'Profil berhasil diperbarui.');
     }
 
@@ -139,6 +185,12 @@ class Admin extends BaseController
         if ($projectId > 0 && ! $existingProject) {
             return $this->withErrors('/admin#projects', ['project' => 'Proyek yang akan diubah tidak ditemukan.']);
         }
+        $upload = $this->storeImageUpload('cover_image', 'project');
+        if ($upload['error'] !== null) {
+            return $this->withErrors('/admin#projects', ['cover_image' => $upload['error']]);
+        }
+        $coverImage = $upload['filename']
+            ?? ($this->request->getPost('remove_cover_image') === '1' ? null : ($existingProject['cover_image'] ?? null));
         $values = [
             'number' => trim((string) ($data['number'] ?? '')) ?: str_pad((string) ($sortOrder), 2, '0', STR_PAD_LEFT),
             'category' => $data['category'],
@@ -150,6 +202,7 @@ class Admin extends BaseController
             'details' => trim((string) ($data['details'] ?? '')),
             'demo_url' => $demoUrl,
             'source_url' => $sourceUrl,
+            'cover_image' => $coverImage,
             'sort_order' => $sortOrder,
         ];
 
@@ -167,7 +220,12 @@ class Admin extends BaseController
         $db->transComplete();
 
         if (! $db->transStatus()) {
+            $this->removeStoredImage($upload['filename']);
             return $this->withErrors('/admin#projects', ['database' => 'Proyek tidak berhasil disimpan. Periksa koneksi database.']);
+        }
+
+        if (($existingProject['cover_image'] ?? null) !== $coverImage) {
+            $this->removeStoredImage($existingProject['cover_image'] ?? null);
         }
 
         return $this->success('/admin#projects', 'Proyek berhasil disimpan.');
@@ -175,8 +233,17 @@ class Admin extends BaseController
 
     public function deleteProject(int $id): RedirectResponse
     {
-        (new ProjectModel())->delete($id);
+        $model = new ProjectModel();
+        $project = $model->find($id);
+        if ($model->delete($id)) {
+            $this->removeStoredImage($project['cover_image'] ?? null);
+        }
         return $this->success('/admin#projects', 'Proyek berhasil dihapus.');
+    }
+
+    public function reorderProject(int $id): RedirectResponse
+    {
+        return $this->reorder('/admin#projects', 'Proyek', new ProjectModel(), $id);
     }
 
     public function saveSkill(): RedirectResponse
@@ -248,6 +315,11 @@ class Admin extends BaseController
         return $this->success('/admin#experience', 'Riwayat berhasil dihapus.');
     }
 
+    public function reorderExperience(int $id): RedirectResponse
+    {
+        return $this->reorder('/admin#experience', 'Riwayat', new ExperienceModel(), $id);
+    }
+
     public function saveSocialLink(): RedirectResponse
     {
         $data = $this->request->getPost(['platform', 'url']);
@@ -289,6 +361,103 @@ class Admin extends BaseController
             return null;
         }
         return $value;
+    }
+
+    /** @return array{filename: ?string, error: ?string} */
+    private function storeImageUpload(string $field, string $prefix): array
+    {
+        $file = $this->request->getFile($field);
+        if ($file === null || $file->getError() === UPLOAD_ERR_NO_FILE) {
+            return ['filename' => null, 'error' => null];
+        }
+        if (! $file->isValid() || $file->hasMoved()) {
+            return ['filename' => null, 'error' => 'File gambar gagal diunggah. Coba pilih ulang file-nya.'];
+        }
+        if ($file->getSize() > 2 * 1024 * 1024) {
+            return ['filename' => null, 'error' => 'Ukuran gambar maksimal 2 MB.'];
+        }
+
+        $imageInfo = @getimagesize($file->getTempName());
+        $mime = is_array($imageInfo) ? ($imageInfo['mime'] ?? '') : '';
+        $extensions = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+        $width = (int) ($imageInfo[0] ?? 0);
+        $height = (int) ($imageInfo[1] ?? 0);
+        if (! isset($extensions[$mime]) || $file->getMimeType() !== $mime) {
+            return ['filename' => null, 'error' => 'Gunakan gambar JPG, PNG, atau WebP yang valid.'];
+        }
+        if ($width < 1 || $height < 1 || $width > 6000 || $height > 6000 || $width * $height > 20000000) {
+            return ['filename' => null, 'error' => 'Dimensi gambar terlalu besar. Gunakan gambar maksimal 6000 × 6000 piksel.'];
+        }
+
+        $directory = WRITEPATH . 'uploads/portfolio';
+        if (! is_dir($directory) && ! mkdir($directory, 0750, true) && ! is_dir($directory)) {
+            return ['filename' => null, 'error' => 'Folder penyimpanan gambar tidak dapat dibuat.'];
+        }
+
+        try {
+            $filename = $prefix . '-' . bin2hex(random_bytes(16)) . '.' . $extensions[$mime];
+            $file->move($directory, $filename);
+        } catch (\Throwable) {
+            return ['filename' => null, 'error' => 'Gambar tidak berhasil disimpan. Periksa izin folder writable.'];
+        }
+
+        return ['filename' => $filename, 'error' => null];
+    }
+
+    private function removeStoredImage(?string $filename): void
+    {
+        if ($filename === null || ! preg_match('/^(?:profile|logo|project)-[a-f0-9]{32}\\.(?:jpg|png|webp)$/D', $filename)) {
+            return;
+        }
+
+        $path = WRITEPATH . 'uploads/portfolio/' . $filename;
+        if (is_file($path)) {
+            @unlink($path);
+        }
+    }
+
+    private function reorder(string $redirect, string $label, Model $model, int $id): RedirectResponse
+    {
+        $direction = (string) $this->request->getPost('direction');
+        if (! in_array($direction, ['up', 'down'], true)) {
+            return $this->withErrors($redirect, ['order' => 'Arah pengurutan tidak valid.']);
+        }
+
+        $db = db_connect();
+        $db->transBegin();
+        $rows = $model->orderBy('sort_order', 'ASC')->orderBy('id', 'ASC')->findAll();
+        $current = null;
+        foreach ($rows as $index => $row) {
+            if ((int) $row['id'] === $id) {
+                $current = $index;
+                break;
+            }
+        }
+        if ($current === null) {
+            $db->transRollback();
+            return $this->withErrors($redirect, ['order' => $label . ' tidak ditemukan.']);
+        }
+
+        $target = $current + ($direction === 'up' ? -1 : 1);
+        if (! isset($rows[$target])) {
+            $db->transRollback();
+            return $this->success($redirect, $direction === 'up' ? 'Item ini sudah berada di urutan pertama.' : 'Item ini sudah berada di urutan terakhir.');
+        }
+
+        [$rows[$current], $rows[$target]] = [$rows[$target], $rows[$current]];
+        foreach ($rows as $index => $row) {
+            if ($model->update($row['id'], ['sort_order' => $index + 1]) === false) {
+                $db->transRollback();
+                return $this->withErrors($redirect, ['order' => 'Urutan ' . strtolower($label) . ' tidak berhasil disimpan.']);
+            }
+        }
+        $db->transComplete();
+
+        if (! $db->transStatus()) {
+            return $this->withErrors($redirect, ['order' => 'Urutan ' . strtolower($label) . ' tidak berhasil disimpan.']);
+        }
+
+        return $this->success($redirect, $label . ' berhasil dipindahkan.');
     }
 
     private function invalidForm(string $redirect): RedirectResponse

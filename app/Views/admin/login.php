@@ -11,7 +11,7 @@
 </head>
 <body class="admin-body">
   <main class="admin-login-wrap">
-    <a class="brand" href="<?= site_url('/') ?>"><span class="brand-mark">R.</span><span class="brand-name"><?= esc($brandName) ?></span></a>
+    <a class="brand" href="<?= site_url('/') ?>"><span class="brand-mark<?= ! empty($profile['logo_photo']) ? ' brand-mark-image' : '' ?>"><?php if (! empty($profile['logo_photo'])): ?><img class="brand-image" src="<?= esc(site_url('media/' . $profile['logo_photo']), 'attr') ?>" alt=""><?php else: ?>R.<?php endif; ?></span><span class="brand-name"><?= esc($brandName) ?></span></a>
     <section class="admin-panel admin-login-panel">
       <p class="eyebrow">PORTFOLIO CONTENT MANAGER</p>
       <h1>Masuk admin</h1>

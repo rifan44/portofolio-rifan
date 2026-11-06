@@ -69,6 +69,11 @@
     if (card) openProject(card);
     if (event.target.closest('[data-action="close-project-modal"]') || event.target === modal) closeProject();
 
+    if (event.target.closest('#backToTop')) {
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
+    }
+
     const filter = event.target.closest('[data-filter]');
     if (filter) {
       const selected = filter.dataset.filter;
@@ -113,5 +118,6 @@
   window.addEventListener('scroll', () => {
     const maximum = document.documentElement.scrollHeight - window.innerHeight;
     $('#scrollProgress').style.width = `${maximum > 0 ? (window.scrollY / maximum) * 100 : 0}%`;
+    $('#backToTop')?.classList.toggle('is-visible', window.scrollY > 380);
   }, { passive: true });
 })();
