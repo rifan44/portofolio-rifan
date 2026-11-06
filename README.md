@@ -122,6 +122,43 @@ php spark db:seed PortfolioSeeder
 
 Setelah itu, buka homepage dan `/admin/login` melalui HTTPS, periksa koneksi database, lalu login dan tinjau konten. Data seed masih berisi email dan tautan sosial contoh; ganti melalui CMS sebelum situs diumumkan. Untuk domain kelas, gunakan file `.env` dan database tersendiri. Perubahan konten di satu salinan tidak otomatis tersinkron ke domain lain.
 
+### Home server dengan Ubuntu, Nginx, PHP-FPM, dan MariaDB
+
+Untuk server pribadi, letakkan root aplikasi di luar document root Nginx. Contoh layout yang dipakai untuk `rifrain.my.id` adalah `/var/www/rifrain.my.id` sebagai root aplikasi dan `/var/www/rifrain.my.id/public` sebagai document root. Jangan jadikan `/var/www/rifrain.my.id` sendiri sebagai document root karena `.env`, `app/`, dan `vendor/` berada di sana.
+
+Contoh konfigurasi Nginx:
+
+```nginx
+server {
+    listen 80;
+    server_name rifrain.my.id;
+    root /var/www/rifrain.my.id/public;
+    index index.php;
+    charset utf-8;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        try_files $uri =404;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        fastcgi_pass unix:/var/run/php/php8.5-fpm.sock;
+    }
+
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+}
+```
+
+Sesuaikan socket PHP-FPM dengan versi PHP pada server. Setelah mengubah konfigurasi, jalankan `nginx -t` sebelum reload Nginx. Atur pemilik file agar Nginx/PHP-FPM dapat membaca aplikasi dan menulis hanya ke `writable/`; jangan menggunakan permission `777`.
+
+Buat database MariaDB dan user khusus aplikasi dengan hak hanya pada database portofolio. Biarkan MariaDB hanya mendengarkan di localhost; jangan membuka port database ke internet. Buat `.env` baru di root aplikasi server, jalankan migration dan seeder pada database kosong, kemudian tinjau data dari `/admin`.
+
+Jika HTTPS berhenti di Cloudflare atau reverse proxy, pastikan sambungan dari proxy ke origin juga memakai TLS sebelum mengaktifkan secure redirect. Jika CI4 berada di belakang proxy, konfigurasi proxy tepercaya dengan benar agar aplikasi mengenali skema HTTPS asli. Cookie admin production memakai flag `Secure`, jadi login membutuhkan HTTPS di browser.
+
 ## Domain proyek lain
 
 URL proyek dapat ditambahkan atau diperbarui dari CMS. Setelah proyek game di `rifrain.tech` atau POS di `skincare.rifrain.my.id` tersedia publik, masukkan URL live dan repository pada formulir proyek agar tampil di modal detail portofolio.
