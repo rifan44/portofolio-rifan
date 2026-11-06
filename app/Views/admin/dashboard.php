@@ -1,4 +1,5 @@
 <?php
+$brandName = trim((string) ($profile['full_name'] ?? '')) ?: 'Portfolio';
 $field = static function (string $name, string $label, mixed $value = '', string $type = 'text', bool $required = true): string {
     $nameEscaped = esc($name, 'attr');
     $labelEscaped = esc($label);
@@ -21,7 +22,7 @@ $typeLabels = ['education' => 'Pendidikan', 'organization' => 'Organisasi', 'wor
   <link rel="stylesheet" href="<?= base_url('assets/styles.css') ?>">
 </head>
 <body class="admin-body">
-  <header class="admin-topbar"><a class="brand" href="<?= site_url('/') ?>"><span class="brand-mark">R.</span><span class="brand-name">rifan<span class="muted">.dev</span></span></a><div class="admin-top-actions"><a class="button button-small button-ghost" href="<?= site_url('/') ?>">Lihat situs ↗</a><form action="<?= site_url('admin/logout') ?>" method="post"><?= csrf_field() ?><button class="button button-small button-outline" type="submit">Keluar</button></form></div></header>
+  <header class="admin-topbar"><a class="brand" href="<?= site_url('/') ?>"><span class="brand-mark">R.</span><span class="brand-name"><?= esc($brandName) ?></span></a><div class="admin-top-actions"><a class="button button-small button-ghost" href="<?= site_url('/') ?>">Lihat situs ↗</a><form action="<?= site_url('admin/logout') ?>" method="post"><?= csrf_field() ?><button class="button button-small button-outline" type="submit">Keluar</button></form></div></header>
   <main class="admin-wrap">
     <div class="admin-heading"><div><p class="eyebrow">PORTFOLIO CONTENT MANAGER</p><h1>Kelola konten</h1><p class="admin-muted">Semua data yang kamu simpan di sini dibaca langsung dari database saat portofolio dibuka.</p></div></div>
     <?php if ($message): ?><div class="admin-alert admin-alert-success" role="status"><?= esc($message) ?></div><?php endif; ?>

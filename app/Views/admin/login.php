@@ -1,3 +1,4 @@
+<?php $brandName = trim((string) ($profile['full_name'] ?? '')) ?: 'Portfolio'; ?>
 <!doctype html>
 <html lang="id">
 <head>
@@ -9,7 +10,7 @@
 </head>
 <body class="admin-body">
   <main class="admin-login-wrap">
-    <a class="brand" href="<?= site_url('/') ?>"><span class="brand-mark">R.</span><span class="brand-name">rifan<span class="muted">.dev</span></span></a>
+    <a class="brand" href="<?= site_url('/') ?>"><span class="brand-mark">R.</span><span class="brand-name"><?= esc($brandName) ?></span></a>
     <section class="admin-panel admin-login-panel">
       <p class="eyebrow">PORTFOLIO CONTENT MANAGER</p>
       <h1>Masuk admin</h1>

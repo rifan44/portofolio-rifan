@@ -47,7 +47,11 @@ class Admin extends BaseController
             }
         }
 
-        return view('admin/login', ['error' => $error, 'configured' => $configured]);
+        return view('admin/login', [
+            'error' => $error,
+            'configured' => $configured,
+            'profile' => (new ProfileModel())->first(),
+        ]);
     }
 
     public function logout(): RedirectResponse

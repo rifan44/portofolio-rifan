@@ -13,8 +13,10 @@ Portofolio pribadi Rifan dengan CodeIgniter 4, PHP, dan MySQL. Halaman publik me
 
 ## Menjalankan lokal
 
+Jalankan perintah dari **root project**, yaitu folder yang berisi `spark`, `composer.json`, `app/`, dan `public/`. File `.env` harus berada di folder yang sama dengan `spark`, bukan di dalam `public/`. Jika ada beberapa salinan project, pastikan server dijalankan dari salinan yang `.env`-nya sedang dikonfigurasi.
+
 1. Buat database MySQL bernama `rifrain_portfolio`.
-2. Salin `.env.example` menjadi `.env`, lalu isi konfigurasi database.
+2. Salin `.env.example` menjadi `.env`, lalu isi konfigurasi database. Di PowerShell, gunakan `Copy-Item .env.example .env`; jangan menimpa `.env` yang sudah berisi konfigurasi lokal.
 3. Pastikan dependensi tersedia dengan `composer install`.
 4. Buat tabel dan isi data awal:
 
@@ -33,9 +35,15 @@ Portofolio pribadi Rifan dengan CodeIgniter 4, PHP, dan MySQL. Halaman publik me
 
 Seeder hanya mengisi konten awal jika tabel profil masih kosong. Ubah email, link sosial, status proyek, dan deskripsi demo melalui CMS atau database sebelum situs dipublikasikan.
 
+Di Windows, buka terminal pada root project tersebut sebelum menjalankan `php spark serve`. Mengedit `.env` pada salinan folder lain tidak mengubah konfigurasi server yang sedang berjalan. Setelah mengganti konfigurasi, hentikan lalu jalankan ulang server lokal.
+
 ## Login dan CMS admin
 
 CMS tersedia di `/admin/login`. Login memakai email dan hash password dari environment, bukan akun default yang tertanam di source.
+
+Di CMS, bagian profil dapat mengubah nama lengkap, peran, headline, ringkasan, tentang, lokasi, fokus, status ketersediaan, dan email. Proyek, teknologi, keahlian, riwayat, dan tautan sosial juga dikelola dari sana. Branding nama di situs publik dan halaman admin mengikuti kolom nama lengkap pada profil. Label navigasi, judul bagian, tombol, dan teks penjelas antarmuka masih ditentukan di view dan belum dapat diedit dari CMS.
+
+Untuk memastikan login terkonfigurasi, cek bahwa `ADMIN_EMAIL` dan `ADMIN_PASSWORD_HASH` terisi di `.env` pada root project yang sedang dijalankan. Jika halaman login menyatakan admin belum dikonfigurasi, biasanya file `.env` berada di salinan folder yang berbeda atau server belum dijalankan ulang.
 
 Buat hash password secara lokal, lalu masukkan outputnya ke `ADMIN_PASSWORD_HASH` dalam `.env`:
 
@@ -43,7 +51,7 @@ Buat hash password secara lokal, lalu masukkan outputnya ke `ADMIN_PASSWORD_HASH
 php -r "echo password_hash('GANTI_DENGAN_PASSWORD_KUAT', PASSWORD_DEFAULT), PHP_EOL;"
 ```
 
-Isi `ADMIN_EMAIL` dengan email admin. Jangan commit `.env` atau bagikan nilai kredensial. CMS memiliki session login, pembatas percobaan login per session, validasi input, CSRF untuk form, dan escape output.
+Isi `ADMIN_EMAIL` dengan email admin. Jangan commit `.env` atau salin `.env` lokal ke hosting. Jika deploy nanti, buat konfigurasi produksi yang baru di root aplikasi server dan gunakan kredensial admin tersendiri. CMS memiliki session login, pembatas percobaan login per session, validasi input, CSRF untuk form, dan escape output.
 
 ## Struktur database
 

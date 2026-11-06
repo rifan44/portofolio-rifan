@@ -32,7 +32,7 @@ $isSafeExternalUrl = static function (string $value): bool {
 
   <header class="site-header" id="top">
     <nav class="nav-shell container" aria-label="Navigasi utama">
-      <a class="brand" href="#top" aria-label="Kembali ke beranda"><span class="brand-mark">R.</span><span class="brand-name">rifan<span class="muted">.dev</span></span></a>
+      <a class="brand" href="#top" aria-label="Kembali ke beranda"><span class="brand-mark">R.</span><span class="brand-name"><?= esc($name) ?></span></a>
       <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Buka navigasi" aria-expanded="false"><span></span><span></span></button>
       <div class="nav-links" id="navLinks">
         <a href="#about">Tentang</a><a href="#work">Proyek</a><a href="#experience">Pengalaman</a><a href="#contact">Kontak</a>
@@ -108,7 +108,7 @@ $isSafeExternalUrl = static function (string $value): bool {
     <section class="contact-section container section-space" id="contact"><div class="contact-panel reveal"><div class="contact-orb orb-left"></div><div class="contact-orb orb-right"></div><div class="contact-content"><p class="eyebrow">05 / GET IN TOUCH</p><h2>Have an idea?<br><span class="serif-accent">Let's make it real.</span></h2><p class="contact-copy">Terbuka untuk diskusi project, kolaborasi, maupun sekadar bertukar ide.</p><a class="button button-primary contact-cta" href="mailto:<?= esc($profile['email'], 'attr') ?>">Say hello <span class="arrow">↗</span></a><div class="contact-socials"><?php foreach ($socialLinks as $social): ?><?php if (! $isSafeExternalUrl((string) $social['url'])) { continue; } ?><a href="<?= esc($social['url'], 'attr') ?>" target="_blank" rel="noopener noreferrer"><?= esc($social['platform']) ?> ↗</a><?php endforeach; ?></div></div><div class="contact-side-note">GOOD THINGS<br>START WITH<br>A CONVERSATION <span>↗</span></div></div></section>
   </main>
 
-  <footer class="site-footer container"><a class="brand" href="#top"><span class="brand-mark">R.</span><span class="brand-name">rifan<span class="muted">.dev</span></span></a><span>DESIGNED & BUILT WITH INTENTION.</span><span>© <span id="currentYear"><?= date('Y') ?></span> <?= esc(strtoupper($name)) ?></span></footer>
+  <footer class="site-footer container"><a class="brand" href="#top"><span class="brand-mark">R.</span><span class="brand-name"><?= esc($name) ?></span></a><span>DESIGNED & BUILT WITH INTENTION.</span><span>© <span id="currentYear"><?= date('Y') ?></span> <?= esc(strtoupper($name)) ?></span></footer>
 
   <div class="modal-backdrop" id="projectModal" aria-hidden="true"><div class="project-dialog" role="dialog" aria-modal="true" aria-labelledby="projectModalTitle"><button class="modal-close" data-action="close-project-modal" aria-label="Tutup">×</button><div class="detail-label" id="projectModalLabel"></div><h2 id="projectModalTitle"></h2><p class="detail-description" id="projectModalDescription"></p><div class="detail-stack" id="projectModalStack"></div><div class="detail-links" id="projectModalLinks"></div></div></div>
   <script src="<?= base_url('assets/app.js') ?>" defer></script>

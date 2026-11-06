@@ -125,3 +125,8 @@ _modules/*
 
 /results/
 /phpunit*.xml
+
+# Local agent notes; keep these out of the public repository
+/AGENTS.md
+/PROJECT_CONTEXT.md
+/ANALYZE_PROJECT_PROMPT.md
