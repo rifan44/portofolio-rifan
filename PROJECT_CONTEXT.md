@@ -52,20 +52,24 @@ Game/                        # Paket aset game, tidak diperlukan aplikasi portfo
 
 - Panduan lokal/deploy ada di `README.md`.
 - Jalankan `composer install`, buat database baru, lalu `php spark migrate` dan `php spark db:seed PortfolioSeeder`.
-- Database belum dibuat atau diubah oleh agent; migrasi dan seeder belum dijalankan.
-- Login admin belum dapat dipakai sampai `ADMIN_EMAIL` dan hash password diisi ke `.env`.
+- Database lokal baru `rifrain_portfolio` telah dibuat di MySQL lokal; tidak ada database hosting/production yang diubah.
+- Migration dan seeder berhasil. Data lokal sekarang: 1 profil, 3 proyek, 12 relasi teknologi, 8 skill, 2 riwayat, 2 tautan sosial.
+- `.env` lokal berada hanya di clone kerja dan diabaikan Git; admin tetap belum aktif sampai `ADMIN_EMAIL` dan hash password dikonfigurasi.
 
 ## Pengujian dan verifikasi
 
-- Manifest appstarter menyediakan dependency/framework dan konfigurasi PHPUnit; belum ada verifikasi aplikasi atau browser yang dijalankan pada sesi migrasi ini.
-- Composer berhasil membuat appstarter dan mengunci `codeigniter4/framework v4.7.6`. Composer 2.4.1 mengeluarkan sejumlah deprecation notice saat berjalan di PHP 8.4.
-- Tidak ada uji koneksi database karena database lokal belum dikonfigurasi.
+- `composer test -- --no-coverage`: lulus, 5 test / 7 assertion (test bawaan appstarter).
+- `php spark migrate` dan `php spark db:seed PortfolioSeeder`: berhasil di database lokal baru.
+- Server lokal: homepage dan `/admin/login` merespons HTTP 200; isi profil, proyek, skill, dan konfigurasi login tampil.
+- Composer mengunci `codeigniter4/framework v4.7.6`. Composer 2.4.1 mengeluarkan deprecation notice di PHP 8.4.
+- Visual browser QA tidak selesai: Computer Use helper gagal tiga kali dengan `native pipe unavailable`; HTTP smoke check tetap berhasil.
+- Belum ada uji CRUD setelah login atau uji deploy/hosting.
 - Source asli di folder `rifrain.tech` berada di bawah root Git user Windows, jadi publikasi dilakukan dari clone bersih repository ini.
 
 ## Risiko dan next steps
 
-1. Buat database MySQL lokal, salin `.env.example` menjadi `.env`, lalu jalankan migrasi dan seeder.
-2. Siapkan password admin lokal, simpan hanya hash di `.env`, dan cek CMS serta halaman publik di browser.
+1. Isi kredensial admin lokal menggunakan hash password, lalu uji login dan CRUD CMS.
+2. Lakukan visual browser QA di beberapa ukuran layar.
 3. Verifikasi hosting mendukung PHP 8.2+, ekstensi yang diperlukan, MySQLi, dan document root ke `public/`.
 4. Ganti konten contoh dan URL placeholder sebelum publikasi.
 5. Periksa lisensi paket di `Game/` sebelum aset didistribusikan.

@@ -1,7 +1,5 @@
 # Rifan Portfolio
 
-# Rifan Portfolio
-
 Portofolio pribadi Rifan dengan CodeIgniter 4, PHP, dan MySQL. Halaman publik membaca profil, proyek, daftar teknologi, riwayat pendidikan/pengalaman/pencapaian, serta tautan kontak dari database.
 
 ## Stack dan kebutuhan server
@@ -82,4 +80,4 @@ URL proyek dapat ditambahkan atau diperbarui dari CMS. Setelah proyek game di `r
 
 - `legacy-static/` menyimpan salinan HTML/CSS/JavaScript statis versi awal sebagai arsip migrasi. Aplikasi aktif menggunakan `app/` dan `public/`.
 - `Game/` berisi koleksi aset pixel-art/game dan tidak diperlukan untuk menjalankan halaman portofolio ini. Periksa lisensi masing-masing paket sebelum distribusi.
-- Tidak ada database yang diubah dalam proses migrasi ini. Siapkan database baru, lalu jalankan migrasi sesuai langkah di atas.
+- Sebelum menjalankan migration/seeder di server lain, pastikan `.env` menunjuk ke database project yang benar. Jangan arahkan perintah ini ke database production yang sudah berisi data tanpa meninjau dampaknya.
