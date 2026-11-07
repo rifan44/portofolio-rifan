@@ -4,6 +4,7 @@
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const modal = $('#projectModal');
+  let previousFocus = null;
 
   function safeExternalUrl(value) {
     if (typeof value !== 'string' || value.trim() === '') return '';
@@ -23,7 +24,12 @@
       return;
     }
 
-    $('#projectModalLabel').textContent = `${project.categoryLabel || 'SELECTED PROJECT'} · ${project.year || ''}`;
+    previousFocus = document.activeElement;
+    if (previousFocus === document.body && card.tabIndex >= 0) {
+      card.focus();
+      previousFocus = card;
+    }
+    $('#projectModalLabel').textContent = [project.categoryLabel, project.year].filter(Boolean).join(` ${modal.dataset.projectSeparator || '·'} `);
     $('#projectModalTitle').textContent = project.title || '';
     $('#projectModalDescription').textContent = project.details || '';
     const stack = $('#projectModalStack');
@@ -35,20 +41,20 @@
 
     const links = $('#projectModalLinks');
     links.replaceChildren();
-    [['demo', 'Live preview ↗'], ['source', 'Source code ↗']].forEach(([key, label]) => {
+    [['demo', modal.dataset.liveLabel], ['source', modal.dataset.sourceLabel]].forEach(([key, label]) => {
       const href = safeExternalUrl(project[key]);
       if (!href) return;
       const link = document.createElement('a');
       link.href = href;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
-      link.textContent = label;
+      link.textContent = `${label} ↗`;
       links.append(link);
     });
     if (!links.childElementCount) {
       const empty = document.createElement('span');
       empty.className = 'disabled-link';
-      empty.textContent = 'Project link belum ditambahkan';
+      empty.textContent = modal.dataset.emptyLinksLabel || '';
       links.append(empty);
     }
 
@@ -62,6 +68,7 @@
     modal.classList.remove('open');
     modal.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
+    if (previousFocus instanceof HTMLElement) previousFocus.focus();
   }
 
   document.addEventListener('click', (event) => {
@@ -86,16 +93,34 @@
     if (event.target.closest('#mobileMenuToggle')) {
       const links = $('#navLinks');
       const expanded = links.classList.toggle('open');
-      $('#mobileMenuToggle').setAttribute('aria-expanded', String(expanded));
+      const toggle = $('#mobileMenuToggle');
+      toggle.setAttribute('aria-expanded', String(expanded));
+      toggle.setAttribute('aria-label', expanded ? toggle.dataset.closeLabel : toggle.dataset.openLabel);
     }
     if (event.target.closest('#navLinks a')) {
       $('#navLinks').classList.remove('open');
-      $('#mobileMenuToggle').setAttribute('aria-expanded', 'false');
+      const toggle = $('#mobileMenuToggle');
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.setAttribute('aria-label', toggle.dataset.openLabel);
     }
   });
 
   document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') closeProject();
+    if (event.key === 'Escape' && modal.classList.contains('open')) closeProject();
+    if (event.key === 'Tab' && modal.classList.contains('open')) {
+      const focusable = $$('a[href], button:not(:disabled), [tabindex="0"]', modal).filter((element) => element.offsetParent !== null);
+      if (focusable.length) {
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (! event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    }
     if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('.project-card')) {
       event.preventDefault();
       openProject(event.target);

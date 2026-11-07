@@ -1,6 +1,12 @@
 <?php
 $brandName = trim((string) ($profile['full_name'] ?? '')) ?: 'Portfolio';
 $stylesVersion = (string) (filemtime(FCPATH . 'assets/styles.css') ?: 1);
+$scriptVersion = (string) (filemtime(FCPATH . 'assets/admin.js') ?: 1);
+$copyValues = array_column($siteCopy, 'value', 'copy_key');
+$copyGroups = [];
+foreach ($siteCopy as $copyEntry) {
+    $copyGroups[$copyEntry['section']][] = $copyEntry;
+}
 $field = static function (string $name, string $label, mixed $value = '', string $type = 'text', bool $required = true): string {
     $nameEscaped = esc($name, 'attr');
     $labelEscaped = esc($label);
@@ -11,7 +17,18 @@ $field = static function (string $name, string $label, mixed $value = '', string
     }
     return '<label class="admin-field"><span>' . $labelEscaped . '</span><input type="' . esc($type, 'attr') . '" name="' . $nameEscaped . '" value="' . $valueEscaped . '"' . $requiredAttribute . '></label>';
 };
-$typeLabels = ['education' => 'Pendidikan', 'organization' => 'Organisasi', 'work' => 'Pengalaman kerja', 'achievement' => 'Pencapaian', 'project' => 'Proyek / aktivitas'];
+$categoryLabels = [
+    'web' => $copyValues['category_web'] ?? 'Aplikasi web',
+    'game' => $copyValues['category_game'] ?? 'Game',
+    'infra' => $copyValues['category_infra'] ?? 'Infrastruktur',
+];
+$typeLabels = [
+    'education' => $copyValues['experience_type_education'] ?? 'Pendidikan',
+    'organization' => $copyValues['experience_type_organization'] ?? 'Organisasi',
+    'work' => $copyValues['experience_type_work'] ?? 'Pengalaman kerja',
+    'achievement' => $copyValues['experience_type_achievement'] ?? 'Pencapaian',
+    'project' => $copyValues['experience_type_project'] ?? 'Proyek / aktivitas',
+];
 ?>
 <!doctype html>
 <html lang="id">
@@ -26,6 +43,7 @@ $typeLabels = ['education' => 'Pendidikan', 'organization' => 'Organisasi', 'wor
 <body class="admin-body">
   <header class="admin-topbar"><a class="brand" href="<?= site_url('/') ?>"><span class="brand-mark<?= ! empty($profile['logo_photo']) ? ' brand-mark-image' : '' ?>"><?php if (! empty($profile['logo_photo'])): ?><img class="brand-image" src="<?= esc(site_url('media/' . $profile['logo_photo']), 'attr') ?>" alt=""><?php else: ?>R.<?php endif; ?></span><span class="brand-name"><?= esc($brandName) ?></span></a><div class="admin-top-actions"><a class="button button-small button-ghost" href="<?= site_url('/') ?>">Lihat situs ↗</a><form action="<?= site_url('admin/logout') ?>" method="post"><?= csrf_field() ?><button class="button button-small button-outline" type="submit">Keluar</button></form></div></header>
   <main class="admin-wrap">
+    <noscript><div class="admin-alert admin-alert-error" role="alert">Aktifkan JavaScript untuk memakai editor crop foto.</div></noscript>
     <div class="admin-heading"><div><p class="eyebrow">PORTFOLIO CONTENT MANAGER</p><h1>Kelola konten</h1><p class="admin-muted">Semua data yang kamu simpan di sini dibaca langsung dari database saat portofolio dibuka.</p></div></div>
     <?php if ($message): ?><div class="admin-alert admin-alert-success" role="status"><?= esc($message) ?></div><?php endif; ?>
     <?php if ($errors): ?><div class="admin-alert admin-alert-error" role="alert"><strong>Periksa kembali data:</strong><ul><?php foreach ($errors as $error): ?><li><?= esc($error) ?></li><?php endforeach; ?></ul></div><?php endif; ?>
@@ -40,21 +58,37 @@ $typeLabels = ['education' => 'Pendidikan', 'organization' => 'Organisasi', 'wor
           <?= $field('availability', 'Status / availability', $profile['availability'], 'text', false) ?>
         </div>
         <div class="admin-upload-grid">
-          <div class="admin-upload-field"><label class="admin-field"><span>Foto profil</span><input type="file" name="profile_photo" accept="image/jpeg,image/png,image/webp"><small>JPG, PNG, atau WebP; maksimal 2 MB.</small></label><?php if (! empty($profile['profile_photo'])): ?><img class="admin-image-preview admin-profile-preview" src="<?= esc(site_url('media/' . $profile['profile_photo']), 'attr') ?>" alt="Foto profil saat ini"><label class="admin-checkbox"><input type="checkbox" name="remove_profile_photo" value="1"><span>Hapus foto profil</span></label><?php endif; ?></div>
-          <div class="admin-upload-field"><label class="admin-field"><span>Logo / ikon R.</span><input type="file" name="logo_photo" accept="image/jpeg,image/png,image/webp"><small>Gambar ini menggantikan tanda R. di header dan footer.</small></label><?php if (! empty($profile['logo_photo'])): ?><img class="admin-image-preview admin-logo-preview" src="<?= esc(site_url('media/' . $profile['logo_photo']), 'attr') ?>" alt="Logo saat ini"><label class="admin-checkbox"><input type="checkbox" name="remove_logo_photo" value="1"><span>Kembali ke logo R.</span></label><?php endif; ?></div>
+          <div class="admin-upload-field"><label class="admin-field"><span>Foto profil</span><input type="file" name="profile_photo" accept="image/jpeg,image/png,image/webp" data-crop-ratio="1"><small>Pilih gambar, sesuaikan crop, lalu simpan. JPG, PNG, atau WebP; hasil dikompresi otomatis.</small></label><?php if (! empty($profile['profile_photo'])): ?><img class="admin-image-preview admin-profile-preview" src="<?= esc(site_url('media/' . $profile['profile_photo']), 'attr') ?>" alt="Foto profil saat ini"><label class="admin-checkbox"><input type="checkbox" name="remove_profile_photo" value="1"><span>Hapus foto profil</span></label><?php endif; ?></div>
+          <div class="admin-upload-field"><label class="admin-field"><span>Logo / ikon R.</span><input type="file" name="logo_photo" accept="image/jpeg,image/png,image/webp" data-crop-ratio="1"><small>Logo akan dipotong persegi dan tampil di header serta footer.</small></label><?php if (! empty($profile['logo_photo'])): ?><img class="admin-image-preview admin-logo-preview" src="<?= esc(site_url('media/' . $profile['logo_photo']), 'attr') ?>" alt="Logo saat ini"><label class="admin-checkbox"><input type="checkbox" name="remove_logo_photo" value="1"><span>Kembali ke logo R.</span></label><?php endif; ?></div>
         </div>
         <button class="button button-primary" type="submit">Simpan profil</button>
       </form>
     </section>
 
-    <section class="admin-panel" id="projects"><div class="admin-section-heading"><div><p class="eyebrow">02 / PROJECTS</p><h2>Proyek</h2></div></div>
+    <section class="admin-panel" id="copy"><div class="admin-section-heading"><div><p class="eyebrow">02 / TEKS HALAMAN</p><h2>Ubah tulisan portofolio</h2></div></div>
+      <p class="admin-muted admin-copy-intro">Judul, label, dan kalimat halaman publik dapat diubah di sini. Isi panel kode juga dapat ditulis ulang; gunakan <code>{nama}</code> dan <code>{peran}</code> agar mengikuti profil.</p>
+      <form action="<?= site_url('admin/site-copy') ?>" method="post" class="admin-form"><?= csrf_field() ?>
+        <?php foreach ($copyGroups as $groupName => $entries): ?>
+          <details class="admin-record admin-copy-group"><summary><strong><?= esc($groupName) ?></strong><span><?= count($entries) ?> teks</span></summary>
+            <div class="admin-copy-grid">
+              <?php foreach ($entries as $entry): ?>
+                <label class="admin-field admin-copy-field"><span><?= esc($entry['label']) ?></span><textarea name="copy[<?= esc($entry['copy_key'], 'attr') ?>]" maxlength="2000" rows="<?= $entry['copy_key'] === 'code_content' ? '9' : '2' ?>"><?= esc($entry['value']) ?></textarea></label>
+              <?php endforeach; ?>
+            </div>
+          </details>
+        <?php endforeach; ?>
+        <button class="button button-primary" type="submit">Simpan tulisan halaman</button>
+      </form>
+    </section>
+
+    <section class="admin-panel" id="projects"><div class="admin-section-heading"><div><p class="eyebrow">03 / PROJECTS</p><h2>Proyek</h2></div></div>
       <?php foreach ($projects as $projectIndex => $project): ?>
         <div class="admin-record-item"><details class="admin-record"><summary><strong><?= esc($project['title']) ?></strong><span><?= esc($project['category_label']) ?> · <?= esc($project['year']) ?></span></summary>
           <form action="<?= site_url('admin/projects/save') ?>" method="post" class="admin-form" enctype="multipart/form-data"><input type="hidden" name="<?= csrf_token() ?>" value="<?= csrf_hash() ?>"><input type="hidden" name="id" value="<?= esc($project['id'], 'attr') ?>">
-            <div class="admin-upload-field"><label class="admin-field"><span>Gambar pratinjau</span><input type="file" name="cover_image" accept="image/jpeg,image/png,image/webp"><small>Unggah tangkapan layar atau gambar proyek; JPG, PNG, atau WebP maksimal 2 MB.</small></label><?php if (! empty($project['cover_image'])): ?><img class="admin-image-preview admin-project-preview" src="<?= esc(site_url('media/' . $project['cover_image']), 'attr') ?>" alt="Gambar pratinjau <?= esc($project['title'], 'attr') ?>"><label class="admin-checkbox"><input type="checkbox" name="remove_cover_image" value="1"><span>Hapus gambar pratinjau</span></label><?php endif; ?></div>
+            <div class="admin-upload-field"><label class="admin-field"><span>Gambar pratinjau</span><input type="file" name="cover_image" accept="image/jpeg,image/png,image/webp" data-crop-ratio="1.7777778"><small>Pilih gambar, atur crop 16:9, lalu simpan.</small></label><?php if (! empty($project['cover_image'])): ?><img class="admin-image-preview admin-project-preview" src="<?= esc(site_url('media/' . $project['cover_image']), 'attr') ?>" alt="Gambar pratinjau <?= esc($project['title'], 'attr') ?>"><label class="admin-checkbox"><input type="checkbox" name="remove_cover_image" value="1"><span>Hapus gambar pratinjau</span></label><?php endif; ?></div>
             <div class="admin-form-grid">
               <?= $field('year', 'Tahun', $project['year']) ?>
-              <label class="admin-field"><span>Kategori</span><select name="category" required><?php foreach (['web' => 'Web app', 'game' => 'Game development', 'infra' => 'Infrastructure'] as $value => $label): ?><option value="<?= esc($value, 'attr') ?>" <?= $project['category'] === $value ? 'selected' : '' ?>><?= esc($label) ?></option><?php endforeach; ?></select></label>
+              <label class="admin-field"><span>Kategori</span><select name="category" required><?php foreach ($categoryLabels as $value => $label): ?><option value="<?= esc($value, 'attr') ?>" <?= $project['category'] === $value ? 'selected' : '' ?>><?= esc($label) ?></option><?php endforeach; ?></select></label>
               <?= $field('status', 'Status', $project['status']) ?><?= $field('category_label', 'Label kategori', $project['category_label']) ?><?= $field('title', 'Nama proyek', $project['title']) ?>
               <?= $field('description', 'Deskripsi singkat', $project['description'], 'textarea') ?><?= $field('details', 'Deskripsi detail', $project['details'], 'textarea', false) ?>
               <?= $field('stack', 'Teknologi (pisahkan dengan koma)', implode(', ', $project['stack']), 'text', false) ?><?= $field('demo_url', 'URL live preview', $project['demo_url'], 'url', false) ?><?= $field('source_url', 'URL source code', $project['source_url'], 'url', false) ?>
@@ -66,9 +100,9 @@ $typeLabels = ['education' => 'Pendidikan', 'organization' => 'Organisasi', 'wor
         </div>
       <?php endforeach; ?>
       <details class="admin-record" id="add-project"><summary><strong>＋ Tambah proyek</strong><span>Isi detail proyek baru</span></summary>
-        <form action="<?= site_url('admin/projects/save') ?>" method="post" class="admin-form" enctype="multipart/form-data"><?= csrf_field() ?><div class="admin-upload-field"><label class="admin-field"><span>Gambar pratinjau (opsional)</span><input type="file" name="cover_image" accept="image/jpeg,image/png,image/webp"><small>JPG, PNG, atau WebP; maksimal 2 MB.</small></label></div><div class="admin-form-grid">
+        <form action="<?= site_url('admin/projects/save') ?>" method="post" class="admin-form" enctype="multipart/form-data"><?= csrf_field() ?><div class="admin-upload-field"><label class="admin-field"><span>Gambar pratinjau (opsional)</span><input type="file" name="cover_image" accept="image/jpeg,image/png,image/webp" data-crop-ratio="1.7777778"><small>Pilih gambar dan sesuaikan pratinjau crop 16:9.</small></label></div><div class="admin-form-grid">
           <?= $field('year', 'Tahun', date('Y')) ?>
-          <label class="admin-field"><span>Kategori</span><select name="category" required><option value="web">Web app</option><option value="game">Game development</option><option value="infra">Infrastructure</option></select></label>
+          <label class="admin-field"><span>Kategori</span><select name="category" required><?php foreach ($categoryLabels as $value => $label): ?><option value="<?= esc($value, 'attr') ?>"><?= esc($label) ?></option><?php endforeach; ?></select></label>
           <?= $field('status', 'Status', 'IN PROGRESS') ?><?= $field('category_label', 'Label kategori', 'SELECTED PROJECT') ?><?= $field('title', 'Nama proyek') ?>
           <?= $field('description', 'Deskripsi singkat', '', 'textarea') ?><?= $field('details', 'Deskripsi detail', '', 'textarea', false) ?>
           <?= $field('stack', 'Teknologi (pisahkan dengan koma)', '', 'text', false) ?><?= $field('demo_url', 'URL live preview', '', 'url', false) ?><?= $field('source_url', 'URL source code', '', 'url', false) ?>
@@ -76,12 +110,12 @@ $typeLabels = ['education' => 'Pendidikan', 'organization' => 'Organisasi', 'wor
       </details>
     </section>
 
-    <section class="admin-panel" id="skills"><div class="admin-section-heading"><div><p class="eyebrow">03 / TOOLKIT</p><h2>Keahlian & teknologi</h2></div></div>
+    <section class="admin-panel" id="skills"><div class="admin-section-heading"><div><p class="eyebrow">04 / TOOLKIT</p><h2>Keahlian & teknologi</h2></div></div>
       <div class="admin-chip-list"><?php foreach ($skills as $skill): ?><form action="<?= site_url('admin/skills/delete/' . $skill['id']) ?>" method="post" class="admin-chip-form"><?= csrf_field() ?><span><?= esc($skill['name']) ?></span><button type="submit" aria-label="Hapus <?= esc($skill['name'], 'attr') ?>">×</button></form><?php endforeach; ?></div>
       <form action="<?= site_url('admin/skills/save') ?>" method="post" class="admin-inline-form"><?= csrf_field() ?><?= $field('name', 'Tambah skill', '', 'text') ?><button class="button button-primary" type="submit">Tambah</button></form>
     </section>
 
-    <section class="admin-panel" id="experience"><div class="admin-section-heading"><div><p class="eyebrow">04 / THE JOURNEY</p><h2>Pendidikan, pengalaman & pencapaian</h2></div></div>
+    <section class="admin-panel" id="experience"><div class="admin-section-heading"><div><p class="eyebrow">05 / THE JOURNEY</p><h2>Pendidikan, pengalaman & pencapaian</h2></div></div>
       <?php foreach ($experiences as $experienceIndex => $experience): ?>
         <div class="admin-record-item"><details class="admin-record"><summary><strong><?= esc($experience['title']) ?></strong><span><?= esc($experience['date_range']) ?> · <?= esc($typeLabels[$experience['type']] ?? $experience['type']) ?></span></summary>
           <form action="<?= site_url('admin/experiences/save') ?>" method="post" class="admin-form"><?= csrf_field() ?><input type="hidden" name="id" value="<?= esc($experience['id'], 'attr') ?>"><div class="admin-form-grid">
@@ -101,11 +135,12 @@ $typeLabels = ['education' => 'Pendidikan', 'organization' => 'Organisasi', 'wor
       </details>
     </section>
 
-    <section class="admin-panel" id="contact"><div class="admin-section-heading"><div><p class="eyebrow">05 / CONTACT</p><h2>Social links</h2></div></div>
+    <section class="admin-panel" id="contact"><div class="admin-section-heading"><div><p class="eyebrow">06 / CONTACT</p><h2>Social links</h2></div></div>
       <div class="admin-social-list"><?php foreach ($socialLinks as $social): ?><div><strong><?= esc($social['platform']) ?></strong><a href="<?= esc($social['url'], 'attr') ?>" target="_blank" rel="noopener noreferrer"><?= esc($social['url']) ?></a><form action="<?= site_url('admin/social-links/delete/' . $social['id']) ?>" method="post"><?= csrf_field() ?><button class="button button-small button-danger" type="submit">Hapus</button></form></div><?php endforeach; ?></div>
       <form action="<?= site_url('admin/social-links/save') ?>" method="post" class="admin-inline-form"><?= csrf_field() ?><?= $field('platform', 'Nama platform', '') ?><?= $field('url', 'URL profil', '', 'url') ?><button class="button button-primary" type="submit">Tambah link</button></form>
     </section>
     <p class="admin-footer-note">Data tersimpan di database project ini. Jangan masukkan password atau credential database ke konten portofolio.</p>
   </main>
+  <script src="<?= base_url('assets/admin.js?v=' . $scriptVersion) ?>" defer></script>
 </body>
 </html>

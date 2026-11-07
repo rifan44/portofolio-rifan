@@ -14,6 +14,7 @@ $routes->post('admin/logout', 'Admin::logout', ['filter' => 'adminauth']);
 $routes->group('admin', ['filter' => 'adminauth'], static function ($routes): void {
     $routes->get('/', 'Admin::index');
     $routes->post('profile', 'Admin::saveProfile');
+    $routes->post('site-copy', 'Admin::saveSiteCopy');
     $routes->post('projects/save', 'Admin::saveProject');
     $routes->post('projects/delete/(:num)', 'Admin::deleteProject/$1');
     $routes->post('projects/reorder/(:num)', 'Admin::reorderProject/$1');

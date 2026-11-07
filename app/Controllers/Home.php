@@ -7,6 +7,7 @@ use App\Models\ProfileModel;
 use App\Models\ProjectModel;
 use App\Models\SkillModel;
 use App\Models\SocialLinkModel;
+use App\Models\SiteCopyModel;
 
 class Home extends BaseController
 {
@@ -18,6 +19,7 @@ class Home extends BaseController
             'skills' => (new SkillModel())->orderBy('sort_order', 'ASC')->findAll(),
             'experiences' => (new ExperienceModel())->orderBy('sort_order', 'ASC')->orderBy('id', 'ASC')->findAll(),
             'socialLinks' => (new SocialLinkModel())->orderBy('sort_order', 'ASC')->findAll(),
+            'siteCopy' => (new SiteCopyModel())->orderBy('sort_order', 'ASC')->findAll(),
         ]);
     }
 }

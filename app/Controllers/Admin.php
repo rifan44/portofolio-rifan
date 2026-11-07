@@ -8,6 +8,7 @@ use App\Models\ProjectModel;
 use App\Models\ProjectTechnologyModel;
 use App\Models\SkillModel;
 use App\Models\SocialLinkModel;
+use App\Models\SiteCopyModel;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\Model;
 
@@ -32,6 +33,8 @@ class Admin extends BaseController
 
             if (! $configured) {
                 $error = 'Login admin belum dikonfigurasi. Atur ADMIN_EMAIL dan ADMIN_PASSWORD_HASH di .env.';
+            } elseif (! $throttler->check($throttleKey, 5, 600)) {
+                $error = 'Terlalu banyak percobaan. Tunggu sebelum mencoba kembali.';
             } else {
                 $emailMatches = hash_equals(strtolower($config->email), $email);
                 $passwordMatches = password_verify($password, $config->passwordHash);
@@ -44,9 +47,7 @@ class Admin extends BaseController
                     return redirect()->to(site_url('admin'));
                 }
 
-                $error = $throttler->check($throttleKey, 5, 600)
-                    ? 'Email atau password tidak sesuai.'
-                    : 'Terlalu banyak percobaan. Tunggu sebelum mencoba kembali.';
+                $error = 'Email atau password tidak sesuai.';
             }
         }
 
@@ -72,6 +73,7 @@ class Admin extends BaseController
             'skills' => (new SkillModel())->orderBy('sort_order', 'ASC')->findAll(),
             'experiences' => (new ExperienceModel())->orderBy('sort_order', 'ASC')->orderBy('id', 'ASC')->findAll(),
             'socialLinks' => (new SocialLinkModel())->orderBy('sort_order', 'ASC')->findAll(),
+            'siteCopy' => (new SiteCopyModel())->orderBy('sort_order', 'ASC')->findAll(),
             'errors' => session()->getFlashdata('errors') ?? [],
             'message' => session()->getFlashdata('message'),
         ]);
@@ -144,6 +146,46 @@ class Admin extends BaseController
             }
         }
         return $this->success('/admin#profile', 'Profil berhasil diperbarui.');
+    }
+
+    public function saveSiteCopy(): RedirectResponse
+    {
+        $submitted = $this->request->getPost('copy');
+        if (! is_array($submitted)) {
+            return $this->withErrors('/admin#copy', ['copy' => 'Data teks halaman tidak valid.']);
+        }
+
+        $model = new SiteCopyModel();
+        $entries = $model->orderBy('sort_order', 'ASC')->findAll();
+        $values = [];
+        foreach ($entries as $entry) {
+            $key = $entry['copy_key'];
+            $value = $submitted[$key] ?? $entry['value'];
+            if (! is_string($value)) {
+                return $this->withErrors('/admin#copy', ['copy' => 'Setiap teks harus berupa tulisan.']);
+            }
+            $value = trim($value);
+            if (mb_strlen($value) > 2000) {
+                return $this->withErrors('/admin#copy', [$entry['label'] => 'Maksimal 2.000 karakter.']);
+            }
+            $values[$entry['id']] = $value;
+        }
+
+        $db = db_connect();
+        $db->transBegin();
+        foreach ($entries as $entry) {
+            $value = $values[$entry['id']];
+            if ($value !== $entry['value'] && $model->update($entry['id'], ['value' => $value]) === false) {
+                $db->transRollback();
+                return $this->withErrors('/admin#copy', ['database' => 'Teks halaman tidak berhasil disimpan.']);
+            }
+        }
+        $db->transComplete();
+        if (! $db->transStatus()) {
+            return $this->withErrors('/admin#copy', ['database' => 'Teks halaman tidak berhasil disimpan. Periksa koneksi database.']);
+        }
+
+        return $this->success('/admin#copy', 'Teks halaman berhasil diperbarui.');
     }
 
     public function saveProject(): RedirectResponse

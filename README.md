@@ -41,9 +41,9 @@ Di Windows, buka terminal pada root project tersebut sebelum menjalankan `php sp
 
 CMS tersedia di `/admin/login`. Login memakai email dan hash password dari environment, bukan akun default yang tertanam di source.
 
-Di CMS, bagian profil dapat mengubah nama lengkap, peran, headline, ringkasan, tentang, lokasi, fokus, status ketersediaan, dan email. Proyek, teknologi, keahlian, riwayat, dan tautan sosial juga dikelola dari sana. Branding nama di situs publik dan halaman admin mengikuti kolom nama lengkap pada profil. Label navigasi, judul bagian, tombol, dan teks penjelas antarmuka masih ditentukan di view dan belum dapat diedit dari CMS.
+Di CMS, bagian profil dapat mengubah nama lengkap, peran, headline, ringkasan, tentang, lokasi, fokus, status ketersediaan, dan email. Proyek, teknologi, keahlian, riwayat, dan tautan sosial juga dikelola dari sana. Branding nama di situs publik dan halaman admin mengikuti kolom nama lengkap pada profil. Bagian **Ubah tulisan portofolio** menyimpan label navigasi, judul dan keterangan bagian, tombol, isi panel `developer.ts`, catatan “Belajar / sambil praktik”, teks kontak, label dialog proyek, dan teks aksesibilitas ke tabel `site_copy` di database.
 
-CMS juga mendukung foto profil, logo pada header/footer, dan gambar pratinjau pada kartu proyek. File JPG, PNG, dan WebP maksimal 2 MB per gambar; file disimpan di `writable/uploads/portfolio`, di luar folder publik. Saat memindahkan atau mencadangkan situs, sertakan folder upload tersebut. Urutan proyek dan riwayat pendidikan/pengalaman/pencapaian dapat diatur dengan tombol naik/turun di panel admin.
+CMS juga mendukung foto profil, logo pada header/footer, dan gambar pratinjau pada kartu proyek. Editor crop berjalan di browser: foto profil dan logo dipotong persegi, gambar proyek dipotong 16:9, lalu hasilnya dikonversi ke WebP maksimal 340 KB sebelum dikirim. Batas ini menjaga total unggahan tetap di bawah batas request Nginx 1 MB pada server saat ini. Server tetap memeriksa tipe file, ukuran, dan dimensi; file disimpan di `writable/uploads/portfolio`, di luar folder publik. Saat memindahkan atau mencadangkan situs, sertakan folder upload tersebut. Urutan proyek dan riwayat pendidikan/pengalaman/pencapaian dapat diatur dengan tombol naik/turun di panel admin.
 
 Untuk memastikan login terkonfigurasi, cek bahwa `ADMIN_EMAIL` dan `ADMIN_PASSWORD_HASH` terisi di `.env` pada root project yang sedang dijalankan. Jika halaman login menyatakan admin belum dikonfigurasi, biasanya file `.env` berada di salinan folder yang berbeda atau server belum dijalankan ulang.
 
@@ -63,6 +63,7 @@ Isi `ADMIN_EMAIL` dengan email admin. Jangan commit `.env` atau salin `.env` lok
 - `project_technologies`: daftar teknologi relasional untuk setiap proyek; terhapus otomatis saat proyek dihapus.
 - `skills`: keahlian dan teknologi.
 - `experiences`: pendidikan, organisasi, pekerjaan, pencapaian, dan aktivitas proyek dengan kolom jenis.
+- `site_copy`: teks antarmuka publik yang dapat diedit melalui CMS.
 
 Migrasi skema ada di `app/Database/Migrations`; data awal ada di `app/Database/Seeds/PortfolioSeeder.php`.
 
@@ -115,7 +116,7 @@ Pastikan PHP dapat menulis ke `writable/cache/`, `writable/logs/`, dan `writable
 
 ### Database dan pemeriksaan setelah upload
 
-Jalankan migration dan seeder hanya untuk database baru yang masih kosong. Periksa kembali database tujuan sebelum menjalankan perintah; jangan menjalankan seeder pada database berisi data tanpa meninjau isinya.
+Jalankan migration setiap kali aplikasi diperbarui agar perubahan struktur database diterapkan. Jalankan seeder hanya pada pemasangan baru di database kosong; jangan menjalankan seeder pada database berisi data tanpa meninjau isinya.
 
 ```bash
 php spark migrate
