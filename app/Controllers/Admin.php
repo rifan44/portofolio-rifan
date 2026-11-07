@@ -3,10 +3,10 @@
 namespace App\Controllers;
 
 use App\Models\ExperienceModel;
-use App\Models\HobbyModel;
 use App\Models\ProfileModel;
 use App\Models\ProjectModel;
 use App\Models\ProjectTechnologyModel;
+use App\Models\PortfolioSectionModel;
 use App\Models\SkillModel;
 use App\Models\SocialLinkModel;
 use CodeIgniter\HTTP\RedirectResponse;
@@ -72,7 +72,7 @@ class Admin extends BaseController
             'projects' => (new ProjectModel())->withTechnologies(),
             'skills' => (new SkillModel())->orderBy('sort_order', 'ASC')->findAll(),
             'experiences' => (new ExperienceModel())->orderBy('sort_order', 'ASC')->orderBy('id', 'ASC')->findAll(),
-            'hobbies' => (new HobbyModel())->orderBy('sort_order', 'ASC')->orderBy('id', 'ASC')->findAll(),
+            'portfolioSections' => (new PortfolioSectionModel())->orderBy('sort_order', 'ASC')->orderBy('id', 'ASC')->findAll(),
             'socialLinks' => (new SocialLinkModel())->orderBy('sort_order', 'ASC')->findAll(),
             'errors' => session()->getFlashdata('errors') ?? [],
             'message' => session()->getFlashdata('message'),
@@ -272,29 +272,6 @@ class Admin extends BaseController
         return $this->success('/admin#skills', 'Skill berhasil dihapus.');
     }
 
-    public function saveHobby(): RedirectResponse
-    {
-        $name = trim((string) $this->request->getPost('name'));
-        if (! $this->validateData(['name' => $name], ['name' => 'required|max_length[80]'])) {
-            return $this->invalidForm('/admin#hobbies');
-        }
-
-        $model = new HobbyModel();
-        if ($model->where('name', $name)->first()) {
-            return $this->withErrors('/admin#hobbies', ['name' => 'Hobi atau minat tersebut sudah ada.']);
-        }
-        $maximumOrder = (int) ($model->selectMax('sort_order')->first()['sort_order'] ?? 0);
-        $model->insert(['name' => $name, 'sort_order' => $maximumOrder + 1]);
-
-        return $this->success('/admin#hobbies', 'Hobi atau minat berhasil ditambahkan.');
-    }
-
-    public function deleteHobby(int $id): RedirectResponse
-    {
-        (new HobbyModel())->delete($id);
-        return $this->success('/admin#hobbies', 'Hobi atau minat berhasil dihapus.');
-    }
-
     public function saveExperience(): RedirectResponse
     {
         $data = $this->request->getPost(['id', 'type', 'date_range', 'title', 'organization', 'description']);
@@ -343,6 +320,11 @@ class Admin extends BaseController
     public function reorderExperience(int $id): RedirectResponse
     {
         return $this->reorder('/admin#experience', 'Riwayat', new ExperienceModel(), $id);
+    }
+
+    public function reorderSection(int $id): RedirectResponse
+    {
+        return $this->reorder('/admin#section-order', 'Urutan section', new PortfolioSectionModel(), $id);
     }
 
     public function saveSocialLink(): RedirectResponse

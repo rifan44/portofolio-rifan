@@ -43,6 +43,16 @@ $typeLabels = [
     <?php if ($message): ?><div class="admin-alert admin-alert-success" role="status"><?= esc($message) ?></div><?php endif; ?>
     <?php if ($errors): ?><div class="admin-alert admin-alert-error" role="alert"><strong>Periksa kembali data:</strong><ul><?php foreach ($errors as $error): ?><li><?= esc($error) ?></li><?php endforeach; ?></ul></div><?php endif; ?>
 
+    <section class="admin-panel" id="section-order"><div class="admin-section-heading"><div><p class="eyebrow">PENGATURAN TAMPILAN</p><h2>Urutan section</h2></div></div>
+      <p class="admin-muted admin-section-order-help">Headline dan perkenalan selalu tampil pertama. Atur urutan section berikutnya sesuai prioritas yang ingin ditampilkan.</p>
+      <ol class="admin-section-order-list">
+        <li class="admin-section-order-item admin-section-order-fixed"><span class="admin-section-order-number">01</span><strong>Headline &amp; perkenalan</strong><span class="admin-section-order-lock">Tetap pertama</span></li>
+        <?php foreach ($portfolioSections as $sectionIndex => $section): ?>
+          <li class="admin-section-order-item"><span class="admin-section-order-number"><?= str_pad((string) ($sectionIndex + 2), 2, '0', STR_PAD_LEFT) ?></span><strong><?= esc($section['label']) ?></strong><div class="admin-section-order-actions"><form action="<?= site_url('admin/sections/reorder/' . $section['id']) ?>" method="post"><?= csrf_field() ?><input type="hidden" name="direction" value="up"><button class="button button-small button-outline admin-order-button" type="submit" aria-label="Naikkan section <?= esc($section['label'], 'attr') ?>" <?= $sectionIndex === 0 ? 'disabled' : '' ?>>&#8593;</button></form><form action="<?= site_url('admin/sections/reorder/' . $section['id']) ?>" method="post"><?= csrf_field() ?><input type="hidden" name="direction" value="down"><button class="button button-small button-outline admin-order-button" type="submit" aria-label="Turunkan section <?= esc($section['label'], 'attr') ?>" <?= $sectionIndex === count($portfolioSections) - 1 ? 'disabled' : '' ?>>&#8595;</button></form></div></li>
+        <?php endforeach; ?>
+      </ol>
+    </section>
+
     <section class="admin-panel" id="profile"><div class="admin-section-heading"><div><p class="eyebrow">01 / PROFILE</p><h2>Informasi diri</h2></div></div>
       <form action="<?= site_url('admin/profile') ?>" method="post" class="admin-form" enctype="multipart/form-data"><input type="hidden" name="<?= csrf_token() ?>" value="<?= csrf_hash() ?>">
         <div class="admin-form-grid">
@@ -114,12 +124,7 @@ $typeLabels = [
       </details>
     </section>
 
-    <section class="admin-panel" id="hobbies"><div class="admin-section-heading"><div><p class="eyebrow">05 / PERSONAL</p><h2>Hobi & minat</h2></div></div>
-      <?php if ($hobbies): ?><div class="admin-chip-list"><?php foreach ($hobbies as $hobby): ?><form action="<?= site_url('admin/hobbies/delete/' . $hobby['id']) ?>" method="post" class="admin-chip-form"><?= csrf_field() ?><span><?= esc($hobby['name']) ?></span><button type="submit" aria-label="Hapus <?= esc($hobby['name'], 'attr') ?>">Ã—</button></form><?php endforeach; ?></div><?php else: ?><p class="admin-muted">Belum ada hobi atau minat. Tambahkan yang ingin ditampilkan di portofolio.</p><?php endif; ?>
-      <form action="<?= site_url('admin/hobbies/save') ?>" method="post" class="admin-inline-form"><?= csrf_field() ?><?= $field('name', 'Tambah hobi atau minat', '') ?><button class="button button-primary" type="submit">Tambah</button></form>
-    </section>
-
-    <section class="admin-panel" id="contact"><div class="admin-section-heading"><div><p class="eyebrow">06 / CONTACT</p><h2>Social links</h2></div></div>
+    <section class="admin-panel" id="contact"><div class="admin-section-heading"><div><p class="eyebrow">05 / CONTACT</p><h2>Social links</h2></div></div>
       <div class="admin-social-list"><?php foreach ($socialLinks as $social): ?><div><strong><?= esc($social['platform']) ?></strong><a href="<?= esc($social['url'], 'attr') ?>" target="_blank" rel="noopener noreferrer"><?= esc($social['url']) ?></a><form action="<?= site_url('admin/social-links/delete/' . $social['id']) ?>" method="post"><?= csrf_field() ?><button class="button button-small button-danger" type="submit">Hapus</button></form></div><?php endforeach; ?></div>
       <form action="<?= site_url('admin/social-links/save') ?>" method="post" class="admin-inline-form"><?= csrf_field() ?><?= $field('platform', 'Nama platform', '') ?><?= $field('url', 'URL profil', '', 'url') ?><button class="button button-primary" type="submit">Tambah link</button></form>
     </section>

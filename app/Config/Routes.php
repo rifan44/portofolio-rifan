@@ -19,8 +19,7 @@ $routes->group('admin', ['filter' => 'adminauth'], static function ($routes): vo
     $routes->post('projects/reorder/(:num)', 'Admin::reorderProject/$1');
     $routes->post('skills/save', 'Admin::saveSkill');
     $routes->post('skills/delete/(:num)', 'Admin::deleteSkill/$1');
-    $routes->post('hobbies/save', 'Admin::saveHobby');
-    $routes->post('hobbies/delete/(:num)', 'Admin::deleteHobby/$1');
+    $routes->post('sections/reorder/(:num)', 'Admin::reorderSection/$1');
     $routes->post('experiences/save', 'Admin::saveExperience');
     $routes->post('experiences/delete/(:num)', 'Admin::deleteExperience/$1');
     $routes->post('experiences/reorder/(:num)', 'Admin::reorderExperience/$1');

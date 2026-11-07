@@ -5,6 +5,25 @@ $scriptVersion = (string) (filemtime(FCPATH . 'assets/app.js') ?: 1);
 $copy = array_column($siteCopy, 'value', 'copy_key');
 $copyText = static fn (string $key): string => (string) ($copy[$key] ?? '');
 $formatCopy = static fn (string $key, array $values = []): string => strtr($copyText($key), $values);
+$defaultSectionKeys = ['about', 'projects', 'skills', 'experience', 'contact'];
+$requestedSectionKeys = array_values(array_unique(array_filter(
+    array_column($sectionOrder, 'section_key'),
+    static fn ($key): bool => in_array($key, $defaultSectionKeys, true),
+)));
+$sectionKeys = array_merge($requestedSectionKeys, array_values(array_diff($defaultSectionKeys, $requestedSectionKeys)));
+$sectionPositions = array_flip($sectionKeys);
+$sectionEyebrow = static function (string $copyKey, string $sectionKey) use ($copyText, $sectionPositions): string {
+    $label = $copyText($copyKey);
+    $number = str_pad((string) (($sectionPositions[$sectionKey] ?? 0) + 2), 2, '0', STR_PAD_LEFT);
+
+    return preg_replace('/^\s*\d+\s*\/\s*/u', $number . ' / ', $label, 1) ?? $label;
+};
+$navigationSections = [
+    'about' => ['id' => 'about', 'copy' => 'nav_about'],
+    'projects' => ['id' => 'work', 'copy' => 'nav_projects'],
+    'experience' => ['id' => 'experience', 'copy' => 'nav_experience'],
+    'contact' => ['id' => 'contact', 'copy' => 'nav_contact'],
+];
 $words = preg_split('/\s+/', trim((string) $profile['headline'])) ?: [];
 $firstLine = implode(' ', array_slice($words, 0, 2));
 $accent = implode(' ', array_slice($words, 2, 2));
@@ -50,7 +69,7 @@ $isSafeExternalUrl = static function (string $value): bool {
       <a class="brand" href="#top" aria-label="<?= esc($copyText('home_link_aria'), 'attr') ?>"><span class="brand-mark<?= ! empty($profile['logo_photo']) ? ' brand-mark-image' : '' ?>"><?php if (! empty($profile['logo_photo'])): ?><img class="brand-image" src="<?= esc(site_url('media/' . $profile['logo_photo']), 'attr') ?>" alt=""><?php else: ?>R.<?php endif; ?></span><span class="brand-name"><?= esc($name) ?></span></a>
       <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="<?= esc($copyText('mobile_menu_open_label'), 'attr') ?>" data-open-label="<?= esc($copyText('mobile_menu_open_label'), 'attr') ?>" data-close-label="<?= esc($copyText('mobile_menu_close_label'), 'attr') ?>" aria-expanded="false"><span></span><span></span></button>
       <div class="nav-links" id="navLinks">
-        <a href="#about"><?= esc($copyText('nav_about')) ?></a><a href="#work"><?= esc($copyText('nav_projects')) ?></a><a href="#experience"><?= esc($copyText('nav_experience')) ?></a><a href="#contact"><?= esc($copyText('nav_contact')) ?></a>
+        <?php foreach ($sectionKeys as $sectionKey): ?><?php if (isset($navigationSections[$sectionKey])): $navigation = $navigationSections[$sectionKey]; ?><a href="#<?= esc($navigation['id'], 'attr') ?>"><?= esc($copyText($navigation['copy'])) ?></a><?php endif; ?><?php endforeach; ?>
         <a class="button button-small button-outline" href="<?= site_url('admin/login') ?>"><?= esc($copyText('nav_admin')) ?></a>
       </div>
     </nav>
@@ -80,19 +99,20 @@ $isSafeExternalUrl = static function (string $value): bool {
 
 
 
+    <?php $sectionMarkup = []; ob_start(); ?>
     <section class="about-section container section-space" id="about">
-      <div class="section-heading reveal"><div><p class="eyebrow"><?= esc($copyText('about_eyebrow')) ?></p><h2><?= esc($profile['role']) ?>.</h2></div></div>
+      <div class="section-heading reveal"><div><p class="eyebrow"><?= esc($sectionEyebrow('about_eyebrow', 'about')) ?></p><h2><?= esc($profile['role']) ?>.</h2></div></div>
       <div class="about-grid">
         <div class="about-card profile-card reveal"><div class="profile-card-top"><span class="tiny-label"><?= esc($copyText('about_profile_label')) ?></span><span class="profile-card-star" aria-hidden="true">✳</span></div><div class="avatar-block"><?php if (! empty($profile['profile_photo'])): ?><img class="profile-photo" src="<?= esc(site_url('media/' . $profile['profile_photo']), 'attr') ?>" alt="<?= esc($formatCopy('profile_photo_alt', ['{nama}' => $name]), 'attr') ?>"><?php else: ?><span><?= esc(implode('', array_map(static fn ($part) => mb_substr($part, 0, 1), array_slice(preg_split('/\s+/', trim($name)) ?: [], 0, 2))) ?: 'R') ?></span><?php endif; ?><div class="avatar-orbit"></div></div>
           <h3><?= esc($name) ?></h3><p class="role-text"><?= esc($profile['role']) ?></p><div class="profile-card-bottom"><span><?= esc(strtoupper($profile['location'] ?: $copyText('about_location_fallback'))) ?></span><span class="profile-card-year"><?= esc($copyText('profile_student_label')) ?></span></div>
         </div>
         <div class="about-copy reveal reveal-delay"><p class="large-copy"><?= esc($profile['about']) ?></p><div class="about-facts"><div><strong><?= str_pad((string) count($projects), 2, '0', STR_PAD_LEFT) ?></strong><span><?= esc($copyText('about_projects_label')) ?><br><?= esc($copyText('about_projects_tail')) ?></span></div><div><strong><?= str_pad((string) count($skills), 2, '0', STR_PAD_LEFT) ?></strong><span><?= esc($copyText('about_skills_label')) ?><br><?= esc($copyText('about_skills_tail')) ?></span></div><div><strong><?= str_pad((string) count($experiences), 2, '0', STR_PAD_LEFT) ?></strong><span><?= esc($copyText('about_history_label')) ?><br><?= esc($copyText('about_history_tail')) ?></span></div></div></div>
       </div>
-      <?php if ($hobbies): ?><div class="about-interests reveal reveal-delay"><h3>Hobi &amp; minat</h3><div class="skill-cloud about-interest-list"><?php foreach ($hobbies as $hobby): ?><span class="skill-pill"><?= esc($hobby['name']) ?></span><?php endforeach; ?></div></div><?php endif; ?>
     </section>
+    <?php $sectionMarkup['about'] = ob_get_clean(); ob_start(); ?>
 
     <section class="work-section section-space" id="work"><div class="container">
-      <div class="section-heading reveal"><div><p class="eyebrow"><?= esc($copyText('projects_eyebrow')) ?></p><h2><?= esc($copyText('projects_title_first')) ?><br><span class="serif-accent"><?= esc($copyText('projects_title_second')) ?></span></h2></div><p class="section-aside"><?= esc($copyText('projects_aside')) ?></p></div>
+      <div class="section-heading reveal"><div><p class="eyebrow"><?= esc($sectionEyebrow('projects_eyebrow', 'projects')) ?></p><h2><?= esc($copyText('projects_title_first')) ?><br><span class="serif-accent"><?= esc($copyText('projects_title_second')) ?></span></h2></div><p class="section-aside"><?= esc($copyText('projects_aside')) ?></p></div>
       <div class="project-toolbar reveal"><div class="filter-list" id="projectFilters"><button class="filter-button active" data-filter="all"><?= esc($copyText('filter_all')) ?> <span><?= str_pad((string) count($projects), 2, '0', STR_PAD_LEFT) ?></span></button><?php foreach ($categoryLabels as $category => $label): ?><button class="filter-button" data-filter="<?= esc($category, 'attr') ?>"><?= esc($label) ?></button><?php endforeach; ?></div><span class="project-sort-label"><?= esc($copyText('project_list_label')) ?> <span aria-hidden="true">↘</span></span></div>
       <div class="project-grid" id="projectGrid">
         <?php foreach ($projects as $index => $project): ?>
@@ -106,15 +126,24 @@ $isSafeExternalUrl = static function (string $value): bool {
       <div class="work-footnote"><span><?= esc($copyText('projects_footnote')) ?></span><span><?= str_pad((string) count($projects), 2, '0', STR_PAD_LEFT) ?> <i aria-hidden="true">—</i> <?= esc($copyText('projects_total_suffix')) ?></span></div>
     </div></section>
 
-    <section class="skills-section container section-space" id="skills"><div class="section-heading reveal"><div><p class="eyebrow"><?= esc($copyText('skills_eyebrow')) ?></p><h2><?= esc($copyText('skills_title_first')) ?><br><span class="serif-accent"><?= esc($copyText('skills_title_second')) ?></span></h2></div><p class="section-aside"><?= esc($copyText('skills_aside')) ?></p></div>
+    <?php $sectionMarkup['projects'] = ob_get_clean(); ob_start(); ?>
+    <section class="skills-section container section-space" id="skills"><div class="section-heading reveal"><div><p class="eyebrow"><?= esc($sectionEyebrow('skills_eyebrow', 'skills')) ?></p><h2><?= esc($copyText('skills_title_first')) ?><br><span class="serif-accent"><?= esc($copyText('skills_title_second')) ?></span></h2></div><p class="section-aside"><?= esc($copyText('skills_aside')) ?></p></div>
       <div class="skills-layout"><div class="skills-intro reveal"><span class="skills-symbol" aria-hidden="true">⌘</span><h3><?= esc($copyText('skills_note_first')) ?><br><?= esc($copyText('skills_note_second')) ?></h3><p><?= esc($copyText('skills_description')) ?></p><span class="skills-caption"><?= esc($copyText('skills_caption')) ?> <i aria-hidden="true">✳</i></span></div><div class="skill-cloud reveal reveal-delay"><?php foreach ($skills as $skill): ?><span class="skill-pill"><?= esc($skill['name']) ?></span><?php endforeach; ?></div></div>
     </section>
 
-    <section class="experience-section section-space" id="experience"><div class="container"><div class="section-heading reveal"><div><p class="eyebrow"><?= esc($copyText('experience_eyebrow')) ?></p><h2><?= esc($copyText('experience_title_first')) ?><br><span class="serif-accent"><?= esc($copyText('experience_title_second')) ?></span></h2></div><p class="section-aside"><?= esc($copyText('experience_aside')) ?></p></div>
+    <?php $sectionMarkup['skills'] = ob_get_clean(); ob_start(); ?>
+    <section class="experience-section section-space" id="experience"><div class="container"><div class="section-heading reveal"><div><p class="eyebrow"><?= esc($sectionEyebrow('experience_eyebrow', 'experience')) ?></p><h2><?= esc($copyText('experience_title_first')) ?><br><span class="serif-accent"><?= esc($copyText('experience_title_second')) ?></span></h2></div><p class="section-aside"><?= esc($copyText('experience_aside')) ?></p></div>
       <div class="timeline"><?php foreach ($experiences as $experience): ?><article class="timeline-item reveal"><div class="timeline-date"><?= esc($experience['date_range']) ?></div><div class="timeline-content"><h3><?= esc($experience['title']) ?></h3><div class="timeline-org"><?= esc($experience['organization']) ?> <?= esc($copyText('experience_separator')) ?> <?= esc($experienceTypeLabels[$experience['type']] ?? $experience['type']) ?></div><p><?= esc($experience['description']) ?></p></div></article><?php endforeach; ?></div>
     </div></section>
 
-    <section class="contact-section container section-space" id="contact"><div class="contact-panel reveal"><div class="contact-orb orb-left"></div><div class="contact-orb orb-right"></div><div class="contact-content"><p class="eyebrow"><?= esc($copyText('contact_eyebrow')) ?></p><h2><?= esc($copyText('contact_heading')) ?></h2><p class="contact-copy"><?= esc($copyText($hasContactEmail ? 'contact_email_message' : 'contact_no_email_message')) ?></p><?php if ($hasContactEmail): ?><a class="button button-primary contact-cta" href="mailto:<?= esc($contactEmail, 'attr') ?>"><?= esc($copyText('contact_email_button')) ?> <span class="arrow" aria-hidden="true">↗</span></a><?php endif; ?><div class="contact-socials"><?php foreach ($socialLinks as $social): ?><?php if (! $isSafeExternalUrl((string) $social['url'])) { continue; } ?><a href="<?= esc($social['url'], 'attr') ?>" target="_blank" rel="noopener noreferrer"><?= esc($social['platform']) ?> <span aria-hidden="true"><?= esc($copyText('contact_social_arrow')) ?></span></a><?php endforeach; ?></div></div><div class="contact-side-note"><?= esc($copyText('contact_side_note')) ?> <span aria-hidden="true">↗</span></div></div></section>
+    <?php $sectionMarkup['experience'] = ob_get_clean(); ob_start(); ?>
+    <section class="contact-section container section-space" id="contact"><div class="contact-panel reveal"><div class="contact-orb orb-left"></div><div class="contact-orb orb-right"></div><div class="contact-content"><p class="eyebrow"><?= esc($sectionEyebrow('contact_eyebrow', 'contact')) ?></p><h2><?= esc($copyText('contact_heading')) ?></h2><p class="contact-copy"><?= esc($copyText($hasContactEmail ? 'contact_email_message' : 'contact_no_email_message')) ?></p><?php if ($hasContactEmail): ?><a class="button button-primary contact-cta" href="mailto:<?= esc($contactEmail, 'attr') ?>"><?= esc($copyText('contact_email_button')) ?> <span class="arrow" aria-hidden="true">↗</span></a><?php endif; ?><div class="contact-socials"><?php foreach ($socialLinks as $social): ?><?php if (! $isSafeExternalUrl((string) $social['url'])) { continue; } ?><a href="<?= esc($social['url'], 'attr') ?>" target="_blank" rel="noopener noreferrer"><?= esc($social['platform']) ?> <span aria-hidden="true"><?= esc($copyText('contact_social_arrow')) ?></span></a><?php endforeach; ?></div></div><div class="contact-side-note"><?= esc($copyText('contact_side_note')) ?> <span aria-hidden="true">↗</span></div></div></section>
+    <?php
+    $sectionMarkup['contact'] = ob_get_clean();
+    foreach ($sectionKeys as $sectionKey) {
+        echo $sectionMarkup[$sectionKey];
+    }
+    ?>
   </main>
 
   <footer class="site-footer container"><a class="brand" href="#top" aria-label="<?= esc($copyText('home_link_aria'), 'attr') ?>"><span class="brand-mark<?= ! empty($profile['logo_photo']) ? ' brand-mark-image' : '' ?>"><?php if (! empty($profile['logo_photo'])): ?><img class="brand-image" src="<?= esc(site_url('media/' . $profile['logo_photo']), 'attr') ?>" alt=""><?php else: ?>R.<?php endif; ?></span><span class="brand-name"><?= esc($name) ?></span></a><span><?= esc($copyText('footer_label')) ?></span><span>© <span id="currentYear"><?= date('Y') ?></span> <?= esc(strtoupper($name)) ?></span></footer>
