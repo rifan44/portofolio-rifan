@@ -92,7 +92,7 @@ $isSafeExternalUrl = static function (string $value): bool {
         </div>
         <div class="floating-note note-top"><span class="note-icon" aria-hidden="true">⌘</span><span><b><?= esc($copyText('hero_note_learning_title')) ?></b><small><?= esc($copyText('hero_note_learning_subtitle')) ?></small></span></div>
         <div class="floating-note note-bottom"><span class="note-icon note-icon-lime" aria-hidden="true">✦</span><span><b><?= esc($copyText('hero_note_project_title')) ?></b><small><?= esc($copyText('hero_note_project_subtitle')) ?></small></span></div>
-        <div class="visual-index"><?= esc($copyText('hero_current_index')) ?> <span><?= esc($copyText('hero_index_separator')) ?></span> <?= esc($copyText('hero_total_index')) ?></div>
+        <div class="visual-index"><?= esc($copyText('hero_current_index')) ?> <span><?= esc($copyText('hero_index_separator')) ?></span> <?= str_pad((string) (count($sectionKeys) + 1), 2, '0', STR_PAD_LEFT) ?></div>
       </div>
       <div class="hero-bottomline"><span><?= esc($copyText('hero_scroll_hint')) ?></span><div class="scroll-line"><i></i></div><span><?= esc($copyText('hero_section_index')) ?></span></div>
     </section>

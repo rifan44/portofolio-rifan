@@ -31,6 +31,7 @@ final class PortfolioSectionOrderFeatureTest extends CIUnitTestCase
         }
         $this->assertStringNotContainsString('Hobi &amp; minat', $body);
         $this->assertStringNotContainsString('Bermain Game', $body);
+        $this->assertStringContainsString('class="visual-index">01 <span>-</span> 06</div>', $body);
     }
 
     public function testHomepageCanRenderConfiguredSectionsAfterThePinnedHero(): void
