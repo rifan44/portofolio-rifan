@@ -297,4 +297,102 @@
       }
     });
   });
+
+  const copySearch = document.querySelector('#siteCopySearch');
+  if (copySearch) {
+    const clearButton = document.querySelector('#siteCopySearchClear');
+    const searchStatus = document.querySelector('#siteCopySearchStatus');
+    const groups = [...document.querySelectorAll('.admin-copy-group')];
+    const fields = groups.flatMap((group) => [...group.querySelectorAll('.admin-copy-field')].map((field) => ({
+      field,
+      group,
+      textarea: field.querySelector('textarea'),
+      label: field.querySelector('.admin-copy-label > span')?.textContent || '',
+    })));
+    let originalOpenStates = null;
+
+    const normalizeSearchText = (value) => value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLocaleLowerCase('id');
+
+    const updateCharacterCount = ({ field, textarea }) => {
+      const count = field.querySelector('[data-copy-length]');
+      if (count && textarea) count.textContent = `${[...textarea.value].length} / 2.000`;
+    };
+
+    const updateTextareaSize = ({ textarea }) => {
+      if (!textarea || textarea.getClientRects().length === 0) return;
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight + 2}px`;
+    };
+
+    const updateCopySearch = () => {
+      const query = normalizeSearchText(copySearch.value.trim());
+      if (query && originalOpenStates === null) {
+        originalOpenStates = groups.map((group) => group.open);
+      }
+
+      const terms = query.split(/\s+/).filter(Boolean);
+      const visibleCounts = new Map(groups.map((group) => [group, 0]));
+      let visibleTotal = 0;
+
+      fields.forEach((entry) => {
+        const haystack = normalizeSearchText([
+          entry.label,
+          entry.textarea?.name || '',
+          entry.textarea?.value || '',
+          entry.group.querySelector('summary strong')?.textContent || '',
+        ].join(' '));
+        const matches = terms.every((term) => haystack.includes(term));
+        entry.field.hidden = Boolean(query) && !matches;
+        if (matches) {
+          visibleCounts.set(entry.group, visibleCounts.get(entry.group) + 1);
+          visibleTotal += 1;
+        }
+      });
+
+      groups.forEach((group, index) => {
+        const count = visibleCounts.get(group);
+        group.hidden = Boolean(query) && count === 0;
+        const countLabel = group.querySelector('[data-copy-visible-count]');
+        if (countLabel) countLabel.textContent = String(query ? count : group.querySelectorAll('.admin-copy-field').length);
+        if (query && count > 0) group.open = true;
+        else if (!query && originalOpenStates !== null) group.open = originalOpenStates[index];
+      });
+
+      if (searchStatus) {
+        const total = fields.length;
+        const visibleGroups = [...visibleCounts.values()].filter((count) => count > 0).length;
+        searchStatus.textContent = query
+          ? (visibleTotal > 0
+            ? `Menampilkan ${visibleTotal} dari ${total} teks di ${visibleGroups} bagian.`
+            : 'Tidak ada tulisan yang cocok. Coba kata lain.')
+          : `${total} teks dalam ${groups.length} bagian.`;
+      }
+      if (clearButton) clearButton.hidden = !query;
+      if (!query) originalOpenStates = null;
+    };
+
+    fields.forEach((entry) => {
+      updateCharacterCount(entry);
+      updateTextareaSize(entry);
+      entry.textarea?.addEventListener('input', () => {
+        updateCharacterCount(entry);
+        updateTextareaSize(entry);
+        if (copySearch.value.trim()) updateCopySearch();
+      });
+    });
+    groups.forEach((group) => group.addEventListener('toggle', () => {
+      if (group.open) fields.filter((entry) => entry.group === group).forEach(updateTextareaSize);
+    }));
+    window.addEventListener('resize', () => fields.forEach(updateTextareaSize));
+    copySearch.addEventListener('input', updateCopySearch);
+    clearButton?.addEventListener('click', () => {
+      copySearch.value = '';
+      updateCopySearch();
+      copySearch.focus();
+    });
+    updateCopySearch();
+  }
 })();

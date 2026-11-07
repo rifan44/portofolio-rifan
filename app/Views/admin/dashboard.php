@@ -66,13 +66,24 @@ $typeLabels = [
     </section>
 
     <section class="admin-panel" id="copy"><div class="admin-section-heading"><div><p class="eyebrow">02 / TEKS HALAMAN</p><h2>Ubah tulisan portofolio</h2></div></div>
-      <p class="admin-muted admin-copy-intro">Judul, label, dan kalimat halaman publik dapat diubah di sini. Isi panel kode juga dapat ditulis ulang; gunakan <code>{nama}</code> dan <code>{peran}</code> agar mengikuti profil.</p>
+      <p class="admin-muted admin-copy-intro">Cari tulisan berdasarkan label atau isinya. Setiap perubahan tetap disimpan bersama saat tombol simpan ditekan. Panel kode mendukung placeholder <code>{nama}</code> dan <code>{peran}</code>.</p>
+      <div class="admin-copy-tools">
+        <label class="admin-copy-search"><span>Cari tulisan</span><input id="siteCopySearch" type="search" placeholder="Contoh: judul proyek, kontak, atau developer.ts" autocomplete="off" aria-describedby="siteCopySearchStatus"></label>
+        <button class="button button-small button-ghost" id="siteCopySearchClear" type="button" hidden>Hapus pencarian</button>
+        <p class="admin-copy-search-status" id="siteCopySearchStatus" aria-live="polite"><?= count($siteCopy) ?> teks dalam <?= count($copyGroups) ?> bagian.</p>
+      </div>
       <form action="<?= site_url('admin/site-copy') ?>" method="post" class="admin-form"><?= csrf_field() ?>
         <?php foreach ($copyGroups as $groupName => $entries): ?>
-          <details class="admin-record admin-copy-group"><summary><strong><?= esc($groupName) ?></strong><span><?= count($entries) ?> teks</span></summary>
+          <details class="admin-record admin-copy-group"><summary><strong><?= esc($groupName) ?></strong><span><span data-copy-visible-count><?= count($entries) ?></span> teks</span></summary>
             <div class="admin-copy-grid">
               <?php foreach ($entries as $entry): ?>
-                <label class="admin-field admin-copy-field"><span><?= esc($entry['label']) ?></span><textarea name="copy[<?= esc($entry['copy_key'], 'attr') ?>]" maxlength="2000" rows="<?= $entry['copy_key'] === 'code_content' ? '9' : '2' ?>"><?= esc($entry['value']) ?></textarea></label>
+                <?php
+                $copyValue = (string) $entry['value'];
+                $copyRows = $entry['copy_key'] === 'code_content'
+                    ? max(9, substr_count($copyValue, "\n") + 1)
+                    : min(8, max(3, substr_count($copyValue, "\n") + 1, (int) ceil(mb_strlen($copyValue) / 70)));
+                ?>
+                <label class="admin-field admin-copy-field"><span class="admin-copy-label"><span><?= esc($entry['label']) ?></span><small data-copy-length><?= mb_strlen($copyValue) ?> / 2.000</small></span><textarea name="copy[<?= esc($entry['copy_key'], 'attr') ?>]" maxlength="2000" rows="<?= $copyRows ?>"><?= esc($copyValue) ?></textarea></label>
               <?php endforeach; ?>
             </div>
           </details>
