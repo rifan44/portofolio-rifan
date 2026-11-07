@@ -88,6 +88,7 @@ $isSafeExternalUrl = static function (string $value): bool {
         </div>
         <div class="about-copy reveal reveal-delay"><p class="large-copy"><?= esc($profile['about']) ?></p><div class="about-facts"><div><strong><?= str_pad((string) count($projects), 2, '0', STR_PAD_LEFT) ?></strong><span><?= esc($copyText('about_projects_label')) ?><br><?= esc($copyText('about_projects_tail')) ?></span></div><div><strong><?= str_pad((string) count($skills), 2, '0', STR_PAD_LEFT) ?></strong><span><?= esc($copyText('about_skills_label')) ?><br><?= esc($copyText('about_skills_tail')) ?></span></div><div><strong><?= str_pad((string) count($experiences), 2, '0', STR_PAD_LEFT) ?></strong><span><?= esc($copyText('about_history_label')) ?><br><?= esc($copyText('about_history_tail')) ?></span></div></div></div>
       </div>
+      <?php if ($hobbies): ?><div class="about-interests reveal reveal-delay"><h3>Hobi &amp; minat</h3><div class="skill-cloud about-interest-list"><?php foreach ($hobbies as $hobby): ?><span class="skill-pill"><?= esc($hobby['name']) ?></span><?php endforeach; ?></div></div><?php endif; ?>
     </section>
 
     <section class="work-section section-space" id="work"><div class="container">

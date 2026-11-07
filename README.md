@@ -41,7 +41,7 @@ Di Windows, buka terminal pada root project tersebut sebelum menjalankan `php sp
 
 CMS tersedia di `/admin/login`. Login memakai email dan hash password dari environment, bukan akun default yang tertanam di source.
 
-Di CMS, bagian profil dapat mengubah nama lengkap, peran, headline, ringkasan, tentang, lokasi, fokus, status ketersediaan, dan email. Proyek, teknologi, keahlian, riwayat, dan tautan sosial juga dikelola dari sana. Branding nama di situs publik dan halaman admin mengikuti kolom nama lengkap pada profil. Bagian **Ubah tulisan portofolio** menyimpan label navigasi, judul dan keterangan bagian, tombol, isi panel `developer.ts`, catatan “Belajar / sambil praktik”, teks kontak, label dialog proyek, dan teks aksesibilitas ke tabel `site_copy` di database.
+Di CMS, bagian profil dapat mengubah nama lengkap, peran, headline, ringkasan, tentang, lokasi, fokus, status ketersediaan, dan email. Proyek, teknologi, keahlian, pendidikan/pengalaman/pencapaian, hobi/minat, serta tautan sosial juga dikelola dari sana. Branding nama mengikuti kolom nama lengkap pada profil. Hobi/minat akan tampil di area Tentang Saya setelah ditambahkan. Teks antarmuka yang bersifat tetap tidak menjadi field CMS; ajukan revisi bila ingin mengubahnya.
 
 CMS juga mendukung foto profil, logo pada header/footer, dan gambar pratinjau pada kartu proyek. Editor crop berjalan di browser: foto profil dan logo dipotong persegi, gambar proyek dipotong 16:9, lalu hasilnya dikonversi ke WebP maksimal 340 KB sebelum dikirim. Batas ini menjaga total unggahan tetap di bawah batas request Nginx 1 MB pada server saat ini. Server tetap memeriksa tipe file, ukuran, dan dimensi; file disimpan di `writable/uploads/portfolio`, di luar folder publik. Saat memindahkan atau mencadangkan situs, sertakan folder upload tersebut. Urutan proyek dan riwayat pendidikan/pengalaman/pencapaian dapat diatur dengan tombol naik/turun di panel admin.
 
@@ -63,7 +63,8 @@ Isi `ADMIN_EMAIL` dengan email admin. Jangan commit `.env` atau salin `.env` lok
 - `project_technologies`: daftar teknologi relasional untuk setiap proyek; terhapus otomatis saat proyek dihapus.
 - `skills`: keahlian dan teknologi.
 - `experiences`: pendidikan, organisasi, pekerjaan, pencapaian, dan aktivitas proyek dengan kolom jenis.
-- `site_copy`: teks antarmuka publik yang dapat diedit melalui CMS.
+- `site_copy`: teks antarmuka yang dipakai oleh halaman publik; tidak tersedia sebagai field CMS.
+- `hobbies`: daftar hobi dan minat yang ditambahkan melalui CMS.
 
 Migrasi skema ada di `app/Database/Migrations`; data awal ada di `app/Database/Seeds/PortfolioSeeder.php`.
 

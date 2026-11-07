@@ -3,12 +3,12 @@
 namespace App\Controllers;
 
 use App\Models\ExperienceModel;
+use App\Models\HobbyModel;
 use App\Models\ProfileModel;
 use App\Models\ProjectModel;
 use App\Models\ProjectTechnologyModel;
 use App\Models\SkillModel;
 use App\Models\SocialLinkModel;
-use App\Models\SiteCopyModel;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\Model;
 
@@ -72,8 +72,8 @@ class Admin extends BaseController
             'projects' => (new ProjectModel())->withTechnologies(),
             'skills' => (new SkillModel())->orderBy('sort_order', 'ASC')->findAll(),
             'experiences' => (new ExperienceModel())->orderBy('sort_order', 'ASC')->orderBy('id', 'ASC')->findAll(),
+            'hobbies' => (new HobbyModel())->orderBy('sort_order', 'ASC')->orderBy('id', 'ASC')->findAll(),
             'socialLinks' => (new SocialLinkModel())->orderBy('sort_order', 'ASC')->findAll(),
-            'siteCopy' => (new SiteCopyModel())->orderBy('sort_order', 'ASC')->findAll(),
             'errors' => session()->getFlashdata('errors') ?? [],
             'message' => session()->getFlashdata('message'),
         ]);
@@ -146,46 +146,6 @@ class Admin extends BaseController
             }
         }
         return $this->success('/admin#profile', 'Profil berhasil diperbarui.');
-    }
-
-    public function saveSiteCopy(): RedirectResponse
-    {
-        $submitted = $this->request->getPost('copy');
-        if (! is_array($submitted)) {
-            return $this->withErrors('/admin#copy', ['copy' => 'Data teks halaman tidak valid.']);
-        }
-
-        $model = new SiteCopyModel();
-        $entries = $model->orderBy('sort_order', 'ASC')->findAll();
-        $values = [];
-        foreach ($entries as $entry) {
-            $key = $entry['copy_key'];
-            $value = $submitted[$key] ?? $entry['value'];
-            if (! is_string($value)) {
-                return $this->withErrors('/admin#copy', ['copy' => 'Setiap teks harus berupa tulisan.']);
-            }
-            $value = trim($value);
-            if (mb_strlen($value) > 2000) {
-                return $this->withErrors('/admin#copy', [$entry['label'] => 'Maksimal 2.000 karakter.']);
-            }
-            $values[$entry['id']] = $value;
-        }
-
-        $db = db_connect();
-        $db->transBegin();
-        foreach ($entries as $entry) {
-            $value = $values[$entry['id']];
-            if ($value !== $entry['value'] && $model->update($entry['id'], ['value' => $value]) === false) {
-                $db->transRollback();
-                return $this->withErrors('/admin#copy', ['database' => 'Teks halaman tidak berhasil disimpan.']);
-            }
-        }
-        $db->transComplete();
-        if (! $db->transStatus()) {
-            return $this->withErrors('/admin#copy', ['database' => 'Teks halaman tidak berhasil disimpan. Periksa koneksi database.']);
-        }
-
-        return $this->success('/admin#copy', 'Teks halaman berhasil diperbarui.');
     }
 
     public function saveProject(): RedirectResponse
@@ -310,6 +270,29 @@ class Admin extends BaseController
     {
         (new SkillModel())->delete($id);
         return $this->success('/admin#skills', 'Skill berhasil dihapus.');
+    }
+
+    public function saveHobby(): RedirectResponse
+    {
+        $name = trim((string) $this->request->getPost('name'));
+        if (! $this->validateData(['name' => $name], ['name' => 'required|max_length[80]'])) {
+            return $this->invalidForm('/admin#hobbies');
+        }
+
+        $model = new HobbyModel();
+        if ($model->where('name', $name)->first()) {
+            return $this->withErrors('/admin#hobbies', ['name' => 'Hobi atau minat tersebut sudah ada.']);
+        }
+        $maximumOrder = (int) ($model->selectMax('sort_order')->first()['sort_order'] ?? 0);
+        $model->insert(['name' => $name, 'sort_order' => $maximumOrder + 1]);
+
+        return $this->success('/admin#hobbies', 'Hobi atau minat berhasil ditambahkan.');
+    }
+
+    public function deleteHobby(int $id): RedirectResponse
+    {
+        (new HobbyModel())->delete($id);
+        return $this->success('/admin#hobbies', 'Hobi atau minat berhasil dihapus.');
     }
 
     public function saveExperience(): RedirectResponse

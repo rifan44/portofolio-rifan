@@ -2,11 +2,6 @@
 $brandName = trim((string) ($profile['full_name'] ?? '')) ?: 'Portfolio';
 $stylesVersion = (string) (filemtime(FCPATH . 'assets/styles.css') ?: 1);
 $scriptVersion = (string) (filemtime(FCPATH . 'assets/admin.js') ?: 1);
-$copyValues = array_column($siteCopy, 'value', 'copy_key');
-$copyGroups = [];
-foreach ($siteCopy as $copyEntry) {
-    $copyGroups[$copyEntry['section']][] = $copyEntry;
-}
 $field = static function (string $name, string $label, mixed $value = '', string $type = 'text', bool $required = true): string {
     $nameEscaped = esc($name, 'attr');
     $labelEscaped = esc($label);
@@ -18,16 +13,16 @@ $field = static function (string $name, string $label, mixed $value = '', string
     return '<label class="admin-field"><span>' . $labelEscaped . '</span><input type="' . esc($type, 'attr') . '" name="' . $nameEscaped . '" value="' . $valueEscaped . '"' . $requiredAttribute . '></label>';
 };
 $categoryLabels = [
-    'web' => $copyValues['category_web'] ?? 'Aplikasi web',
-    'game' => $copyValues['category_game'] ?? 'Game',
-    'infra' => $copyValues['category_infra'] ?? 'Infrastruktur',
+    'web' => 'Aplikasi web',
+    'game' => 'Pengembangan game',
+    'infra' => 'Infrastruktur',
 ];
 $typeLabels = [
-    'education' => $copyValues['experience_type_education'] ?? 'Pendidikan',
-    'organization' => $copyValues['experience_type_organization'] ?? 'Organisasi',
-    'work' => $copyValues['experience_type_work'] ?? 'Pengalaman kerja',
-    'achievement' => $copyValues['experience_type_achievement'] ?? 'Pencapaian',
-    'project' => $copyValues['experience_type_project'] ?? 'Proyek / aktivitas',
+    'education' => 'Pendidikan',
+    'organization' => 'Organisasi',
+    'work' => 'Pengalaman kerja',
+    'achievement' => 'Pencapaian',
+    'project' => 'Proyek / aktivitas',
 ];
 ?>
 <!doctype html>
@@ -65,34 +60,7 @@ $typeLabels = [
       </form>
     </section>
 
-    <section class="admin-panel" id="copy"><div class="admin-section-heading"><div><p class="eyebrow">02 / TEKS HALAMAN</p><h2>Ubah tulisan portofolio</h2></div></div>
-      <p class="admin-muted admin-copy-intro">Cari tulisan berdasarkan label atau isinya. Setiap perubahan tetap disimpan bersama saat tombol simpan ditekan. Panel kode mendukung placeholder <code>{nama}</code> dan <code>{peran}</code>.</p>
-      <div class="admin-copy-tools">
-        <label class="admin-copy-search"><span>Cari tulisan</span><input id="siteCopySearch" type="search" placeholder="Contoh: judul proyek, kontak, atau developer.ts" autocomplete="off" aria-describedby="siteCopySearchStatus"></label>
-        <button class="button button-small button-ghost" id="siteCopySearchClear" type="button" hidden>Hapus pencarian</button>
-        <p class="admin-copy-search-status" id="siteCopySearchStatus" aria-live="polite"><?= count($siteCopy) ?> teks dalam <?= count($copyGroups) ?> bagian.</p>
-      </div>
-      <form action="<?= site_url('admin/site-copy') ?>" method="post" class="admin-form"><?= csrf_field() ?>
-        <?php foreach ($copyGroups as $groupName => $entries): ?>
-          <details class="admin-record admin-copy-group"><summary><strong><?= esc($groupName) ?></strong><span><span data-copy-visible-count><?= count($entries) ?></span> teks</span></summary>
-            <div class="admin-copy-grid">
-              <?php foreach ($entries as $entry): ?>
-                <?php
-                $copyValue = (string) $entry['value'];
-                $copyRows = $entry['copy_key'] === 'code_content'
-                    ? max(9, substr_count($copyValue, "\n") + 1)
-                    : min(8, max(3, substr_count($copyValue, "\n") + 1, (int) ceil(mb_strlen($copyValue) / 70)));
-                ?>
-                <label class="admin-field admin-copy-field"><span class="admin-copy-label"><span><?= esc($entry['label']) ?></span><small data-copy-length><?= mb_strlen($copyValue) ?> / 2.000</small></span><textarea name="copy[<?= esc($entry['copy_key'], 'attr') ?>]" maxlength="2000" rows="<?= $copyRows ?>"><?= esc($copyValue) ?></textarea></label>
-              <?php endforeach; ?>
-            </div>
-          </details>
-        <?php endforeach; ?>
-        <button class="button button-primary" type="submit">Simpan tulisan halaman</button>
-      </form>
-    </section>
-
-    <section class="admin-panel" id="projects"><div class="admin-section-heading"><div><p class="eyebrow">03 / PROJECTS</p><h2>Proyek</h2></div></div>
+    <section class="admin-panel" id="projects"><div class="admin-section-heading"><div><p class="eyebrow">02 / PROJECTS</p><h2>Proyek</h2></div></div>
       <?php foreach ($projects as $projectIndex => $project): ?>
         <div class="admin-record-item"><details class="admin-record"><summary><strong><?= esc($project['title']) ?></strong><span><?= esc($project['category_label']) ?> · <?= esc($project['year']) ?></span></summary>
           <form action="<?= site_url('admin/projects/save') ?>" method="post" class="admin-form" enctype="multipart/form-data"><input type="hidden" name="<?= csrf_token() ?>" value="<?= csrf_hash() ?>"><input type="hidden" name="id" value="<?= esc($project['id'], 'attr') ?>">
@@ -121,12 +89,12 @@ $typeLabels = [
       </details>
     </section>
 
-    <section class="admin-panel" id="skills"><div class="admin-section-heading"><div><p class="eyebrow">04 / TOOLKIT</p><h2>Keahlian & teknologi</h2></div></div>
+    <section class="admin-panel" id="skills"><div class="admin-section-heading"><div><p class="eyebrow">03 / TOOLKIT</p><h2>Keahlian & teknologi</h2></div></div>
       <div class="admin-chip-list"><?php foreach ($skills as $skill): ?><form action="<?= site_url('admin/skills/delete/' . $skill['id']) ?>" method="post" class="admin-chip-form"><?= csrf_field() ?><span><?= esc($skill['name']) ?></span><button type="submit" aria-label="Hapus <?= esc($skill['name'], 'attr') ?>">×</button></form><?php endforeach; ?></div>
       <form action="<?= site_url('admin/skills/save') ?>" method="post" class="admin-inline-form"><?= csrf_field() ?><?= $field('name', 'Tambah skill', '', 'text') ?><button class="button button-primary" type="submit">Tambah</button></form>
     </section>
 
-    <section class="admin-panel" id="experience"><div class="admin-section-heading"><div><p class="eyebrow">05 / THE JOURNEY</p><h2>Pendidikan, pengalaman & pencapaian</h2></div></div>
+    <section class="admin-panel" id="experience"><div class="admin-section-heading"><div><p class="eyebrow">04 / THE JOURNEY</p><h2>Pendidikan, pengalaman & pencapaian</h2></div></div>
       <?php foreach ($experiences as $experienceIndex => $experience): ?>
         <div class="admin-record-item"><details class="admin-record"><summary><strong><?= esc($experience['title']) ?></strong><span><?= esc($experience['date_range']) ?> · <?= esc($typeLabels[$experience['type']] ?? $experience['type']) ?></span></summary>
           <form action="<?= site_url('admin/experiences/save') ?>" method="post" class="admin-form"><?= csrf_field() ?><input type="hidden" name="id" value="<?= esc($experience['id'], 'attr') ?>"><div class="admin-form-grid">
@@ -144,6 +112,11 @@ $typeLabels = [
           <?= $field('date_range', 'Periode') ?><?= $field('title', 'Jabatan / aktivitas') ?><?= $field('organization', 'Institusi / organisasi') ?><?= $field('description', 'Deskripsi', '', 'textarea') ?>
         </div><button class="button button-primary" type="submit">Tambah riwayat</button></form>
       </details>
+    </section>
+
+    <section class="admin-panel" id="hobbies"><div class="admin-section-heading"><div><p class="eyebrow">05 / PERSONAL</p><h2>Hobi & minat</h2></div></div>
+      <?php if ($hobbies): ?><div class="admin-chip-list"><?php foreach ($hobbies as $hobby): ?><form action="<?= site_url('admin/hobbies/delete/' . $hobby['id']) ?>" method="post" class="admin-chip-form"><?= csrf_field() ?><span><?= esc($hobby['name']) ?></span><button type="submit" aria-label="Hapus <?= esc($hobby['name'], 'attr') ?>">Ã—</button></form><?php endforeach; ?></div><?php else: ?><p class="admin-muted">Belum ada hobi atau minat. Tambahkan yang ingin ditampilkan di portofolio.</p><?php endif; ?>
+      <form action="<?= site_url('admin/hobbies/save') ?>" method="post" class="admin-inline-form"><?= csrf_field() ?><?= $field('name', 'Tambah hobi atau minat', '') ?><button class="button button-primary" type="submit">Tambah</button></form>
     </section>
 
     <section class="admin-panel" id="contact"><div class="admin-section-heading"><div><p class="eyebrow">06 / CONTACT</p><h2>Social links</h2></div></div>
